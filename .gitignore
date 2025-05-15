@@ -1,0 +1,30 @@
+# Ignore WoW cache and temporary files
+*.bak
+*.log
+*.swp
+*.tmp
+
+# Ignore compiled Lua bytecode (if ever present)
+*.luac
+
+# Ignore project/workspace files from editors
+.vscode/
+.idea/
+*.code-workspace
+
+# Ignore build or packaging output (if you have scripts/tools for this)
+/release/
+/build/
+/dist/
+
+# Ignore files from tools like WowUp, CurseForge, etc.
+*.toc.bak
+*.pkgmeta
+.wowtools/
+
+# Optionally ignore ZIPs you make for release
+*.zip
+
+# Ignore .DS_Store and Thumbs.db (macOS and Windows)
+.DS_Store
+Thumbs.db
