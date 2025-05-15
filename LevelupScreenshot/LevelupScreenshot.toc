@@ -1,0 +1,6 @@
+## Interface: 80200
+## Title: Level-Up Screenshot
+## Notes: Automatically does /played and takes a screenshot when you level up
+## Author: Foxthorn
+## Version: 1.0
+LevelupScreenshot.lua
