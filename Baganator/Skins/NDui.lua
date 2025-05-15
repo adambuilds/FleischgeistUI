@@ -93,6 +93,24 @@ local skinners = {
   TrimScrollBar = function(frame)
     B.ReskinTrimScroll(frame)
   end,
+  ScrollButton = function(button, tags)
+    button:ClearNormalTexture()
+    local tex = button:CreateTexture(nil, "ARTWORK")
+    tex:SetTexture(DB.ArrowUp)
+    tex:SetSize(16, 16)
+    button:SetSize(16, 16)
+    button:SetAlpha(1)
+    if tags.left then
+      tex:SetPoint("RIGHT")
+      tex:SetRotation(math.pi/2)
+    elseif tags.right then
+      tex:SetPoint("LEFT")
+      tex:SetRotation(-math.pi/2)
+    end
+    button.__texture = tex
+    button:SetScript("OnEnter", B.Texture_OnEnter)
+    button:SetScript("OnLeave", B.Texture_OnLeave)
+  end,
   CheckBox = function(frame)
     B.ReskinCheck(frame)
   end,
@@ -139,9 +157,9 @@ local function LoadSkin()
     end
   end
 
-  B, C, L, DB = unpack(NDui)
+  B, C, L, DB = unpack(NDui or AuroraClassic)
 end
 
-if addonTable.Skins.IsAddOnLoading("NDui") then
+if addonTable.Skins.IsAddOnLoading("NDui") or addonTable.Skins.IsAddOnLoading("AuroraClassic") then
   addonTable.Skins.RegisterSkin(addonTable.Locales.NDUI, "ndui", LoadSkin, SkinFrame, SetConstants, {}, true)
 end
