@@ -1,6 +1,6 @@
 # Syndicator
 
-## [201](https://github.com/Baganator/Syndicator/tree/201) (2025-05-15)
-[Full Changelog](https://github.com/Baganator/Syndicator/compare/200...201) 
+## [203](https://github.com/Baganator/Syndicator/tree/203) (2025-05-16)
+[Full Changelog](https://github.com/Baganator/Syndicator/compare/202...203) 
 
-- Unify to produce just one build  
+- Reenable tooltip scanning on Mists Classic (issue appears fixed now)  

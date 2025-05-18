@@ -17,6 +17,7 @@ NWBbuffListFrame:SetMovable(true);
 NWBbuffListFrame:EnableMouse(true);
 tinsert(UISpecialFrames, "NWBbuffListFrame");
 NWBbuffListFrame:SetPoint("CENTER", UIParent, 20, 120);
+NWBbuffListFrame:SetClampedToScreen(true);
 NWBbuffListFrame:SetBackdrop({bgFile = "Interface\\Buttons\\WHITE8x8",insets = {top = 0, left = 0, bottom = 0, right = 0}});
 NWBbuffListFrame:SetBackdropColor(0,0,0,.6);
 NWBbuffListFrame.CharCount:Hide();

@@ -429,6 +429,8 @@ L["SLASH_SEARCH_EXTENDED"] = "search [text]"
 L["SLASH_SEARCH_HELP"] = "Open and then search the bags."
 L["SLASH_KEYWORDS"] = "keywords"
 L["SLASH_KEYWORDS_HELP"] = "Show keywords matching bag items in their tooltips."
+L["SLASH_SWAP"] = "swap"
+L["SLASH_SWAP_HELP"] = "Swap from categories to single bag layout or the reverse."
 L["SLASH_CATEGORIES"] = "categories"
 L["SLASH_CATEGORIES_HELP"] = "Show categories matching or not matching items in their tooltips."
 L["SLASH_UNKNOWN_COMMAND"] = "Unknown command '%s'"
@@ -739,6 +741,10 @@ L["SLASH_RESETCATEGORIES_HELP"] = "Réinitialise les paramètres des catégories
 L["SLASH_SEARCH"] = "recherche"
 L["SLASH_SEARCH_EXTENDED"] = "recherche [texte]"
 L["SLASH_SEARCH_HELP"] = "Ouvre puis recherche dans les sacs."
+--[[Translation missing --]]
+L["SLASH_SWAP"] = "swap"
+--[[Translation missing --]]
+L["SLASH_SWAP_HELP"] = "Swap from categories to single bag layout or the reverse."
 L["SLASH_UNKNOWN_COMMAND"] = "Commande inconnue '%s'"
 L["SLOT"] = "Emplacements"
 L["SOCKET_INTERFACE"] = "Interface des châsses "
@@ -1147,6 +1153,10 @@ L["SLASH_RESETCATEGORIES_HELP"] = "Setze alle Kategorie Einstellungen auf den St
 L["SLASH_SEARCH"] = "suche"
 L["SLASH_SEARCH_EXTENDED"] = "suche [Text]"
 L["SLASH_SEARCH_HELP"] = "Öffne die Taschen und suche."
+--[[Translation missing --]]
+L["SLASH_SWAP"] = "swap"
+--[[Translation missing --]]
+L["SLASH_SWAP_HELP"] = "Swap from categories to single bag layout or the reverse."
 L["SLASH_UNKNOWN_COMMAND"] = "Unbekannte Aktion '%s'"
 L["SLOT"] = "Slot"
 L["SOCKET_INTERFACE"] = "Sockel Oberfläche"
@@ -1526,6 +1536,10 @@ L["SLASH_RESETCATEGORIES_HELP"] = "Сброс настроек категори�
 L["SLASH_SEARCH"] = "поиск"
 L["SLASH_SEARCH_EXTENDED"] = "поиск [текст]"
 L["SLASH_SEARCH_HELP"] = "Открыть и затем поиск в сумках."
+--[[Translation missing --]]
+L["SLASH_SWAP"] = "swap"
+--[[Translation missing --]]
+L["SLASH_SWAP_HELP"] = "Swap from categories to single bag layout or the reverse."
 L["SLASH_UNKNOWN_COMMAND"] = "Неизвестная команда '%s'"
 L["SLOT"] = "Ячейка"
 L["SOCKET_INTERFACE"] = "Окно инкрустации"
@@ -1907,6 +1921,10 @@ L["SLASH_RESETCATEGORIES_HELP"] = "Redefine as configurações das categorias pa
 L["SLASH_SEARCH"] = "procurar"
 L["SLASH_SEARCH_EXTENDED"] = "procurar [texto]"
 L["SLASH_SEARCH_HELP"] = "Abre e depois procurar nas bolsas."
+--[[Translation missing --]]
+L["SLASH_SWAP"] = "swap"
+--[[Translation missing --]]
+L["SLASH_SWAP_HELP"] = "Swap from categories to single bag layout or the reverse."
 L["SLASH_UNKNOWN_COMMAND"] = "Comando desconhecido '%s'"
 L["SLOT"] = "Espaço"
 L["SOCKET_INTERFACE"] = "Interface de engaste"
@@ -2284,6 +2302,10 @@ L["SLASH_RESETCATEGORIES_HELP"] = "Restablece la configuración de las categorí
 L["SLASH_SEARCH"] = "buscar"
 L["SLASH_SEARCH_EXTENDED"] = "buscar [texto]"
 L["SLASH_SEARCH_HELP"] = "Abre y luego busca en las bolsas."
+--[[Translation missing --]]
+L["SLASH_SWAP"] = "swap"
+--[[Translation missing --]]
+L["SLASH_SWAP_HELP"] = "Swap from categories to single bag layout or the reverse."
 L["SLASH_UNKNOWN_COMMAND"] = "Comando desconocido '%s'"
 L["SLOT"] = "Casilla"
 L["SOCKET_INTERFACE"] = "Interfaz de ranura"
@@ -2663,6 +2685,10 @@ L["SLASH_RESETCATEGORIES_HELP"] = "Restablece la configuración de las categorí
 L["SLASH_SEARCH"] = "buscar"
 L["SLASH_SEARCH_EXTENDED"] = "buscar [texto]"
 L["SLASH_SEARCH_HELP"] = "Abre y luego busca en las bolsas."
+--[[Translation missing --]]
+L["SLASH_SWAP"] = "swap"
+--[[Translation missing --]]
+L["SLASH_SWAP_HELP"] = "Swap from categories to single bag layout or the reverse."
 L["SLASH_UNKNOWN_COMMAND"] = "Comando desconocido '%s'"
 L["SLOT"] = "Casilla"
 L["SOCKET_INTERFACE"] = "Interfaz de ranura"
@@ -3040,6 +3066,10 @@ L["SLASH_RESETCATEGORIES_HELP"] = "重置分類設定為預設，並重新載入
 L["SLASH_SEARCH"] = "搜尋"
 L["SLASH_SEARCH_EXTENDED"] = "搜尋 [文字]"
 L["SLASH_SEARCH_HELP"] = "開啟然後搜尋背包。"
+--[[Translation missing --]]
+L["SLASH_SWAP"] = "swap"
+--[[Translation missing --]]
+L["SLASH_SWAP_HELP"] = "Swap from categories to single bag layout or the reverse."
 L["SLASH_UNKNOWN_COMMAND"] = "未知指令 '%s'"
 L["SLOT"] = "部位"
 L["SOCKET_INTERFACE"] = "插槽介面"
@@ -3417,6 +3447,8 @@ L["SLASH_RESETCATEGORIES_HELP"] = "将分类设置重置为默认设置，然后
 L["SLASH_SEARCH"] = "搜索"
 L["SLASH_SEARCH_EXTENDED"] = "搜索 [文本]"
 L["SLASH_SEARCH_HELP"] = "打开背包，然后搜索。"
+L["SLASH_SWAP"] = "切换"
+L["SLASH_SWAP_HELP"] = "在分类背包和大背包之间切换（或反向操作）。"
 L["SLASH_UNKNOWN_COMMAND"] = "未知命令 '%s'"
 L["SLOT"] = "装备栏"
 L["SOCKET_INTERFACE"] = "插槽界面"
@@ -3794,6 +3826,8 @@ L["SLASH_RESETCATEGORIES_HELP"] = "카테고리 설정을 기본값으로 초기
 L["SLASH_SEARCH"] = "검색"
 L["SLASH_SEARCH_EXTENDED"] = "검색 [텍스트]"
 L["SLASH_SEARCH_HELP"] = "가방을 열고 검색하세요."
+L["SLASH_SWAP"] = "전환"
+L["SLASH_SWAP_HELP"] = "카테고리에서 단일 가방 레이아웃으로 바꾸거나 그 반대로 전환합니다."
 L["SLASH_UNKNOWN_COMMAND"] = "알 수 없는 명령어 '%s'"
 L["SLOT"] = "슬롯"
 L["SOCKET_INTERFACE"] = "보석 장착"
@@ -4479,6 +4513,10 @@ L["SLASH_SEARCH"] = "search"
 L["SLASH_SEARCH_EXTENDED"] = "search [text]"
 --[[Translation missing --]]
 L["SLASH_SEARCH_HELP"] = "Open and then search the bags."
+--[[Translation missing --]]
+L["SLASH_SWAP"] = "swap"
+--[[Translation missing --]]
+L["SLASH_SWAP_HELP"] = "Swap from categories to single bag layout or the reverse."
 --[[Translation missing --]]
 L["SLASH_UNKNOWN_COMMAND"] = "Unknown command '%s'"
 --[[Translation missing --]]

@@ -151,7 +151,8 @@ local TT_COLOR_TEXT_UNIT_SPEED = CreateColor(0.8, 0.8, 0.8, 1); -- light+ grey (
 
 -- remove unwanted lines from tip, such as "Alliance", "Horde", "PvP" and "Shadow Priest".
 function ttStyle:RemoveUnwantedLinesFromTip(tip, unitRecord)
-	local creatureFamily, creatureType = UnitCreatureFamily(unitRecord.id), UnitCreatureType(unitRecord.id);
+	local creatureFamily = UnitCreatureFamily(unitRecord.id);
+	local creatureType = UnitCreatureType(unitRecord.id);
 	
 	local hideCreatureTypeIfNoCreatureFamily = ((not unitRecord.isPlayer) or (unitRecord.isWildBattlePet)) and (not creatureFamily) and (creatureType);
 	local hideSpecializationAndClassText = (cfg.hideSpecializationAndClassText) and (unitRecord.isPlayer) and (LibFroznFunctions.hasWoWFlavor.specializationAndClassTextInPlayerUnitTip) and (unitRecord.className);
@@ -382,22 +383,34 @@ function ttStyle:GeneratePlayerLines(tip, currentDisplayParams, unitRecord, firs
 		end
 	end
 	-- guild
-	-- local guild, guildRank = GetGuildInfo(unitRecord.id);
 	local guildName, guildRankName, guildRankIndex, realm = GetGuildInfo(unitRecord.id);
 	if (guildName) then
 		local playerGuildName, playerGuildRankName, playerGuildRankIndex, playerRealm = GetGuildInfo("player");
-		local isPlayerGuild = (guildName == playerGuildName) and (realm == playerRealm);
+		local isForeignGuildRealm = (realm ~= playerRealm);
+		local isPlayerGuild = (guildName == playerGuildName) and (not isForeignGuildRealm);
 		if (cfg.showGuild) then -- show guild
+			local textGuildRealm = "";
+			if (isForeignGuildRealm) and (cfg.showGuildRealm ~= "none") then
+				if (cfg.showGuildRealm == "show") then
+					textGuildRealm = " - " .. realm;
+				elseif (cfg.showGuildRealm == "asterisk") then
+					textGuildRealm = " (*)";
+				end
+			end
 			local guildColor = (isPlayerGuild and CreateColor(unpack(cfg.colorSameGuild)) or cfg.colorGuildByReaction and unitRecord.reactionColor or CreateColor(unpack(cfg.colorGuild)));
-			local text = guildColor:WrapTextInColorCode(format("<%s>", guildName));
+			local text = guildColor:WrapTextInColorCode(format("<%s>", guildName .. textGuildRealm));
+			
 			if (cfg.showGuildRank and guildRankName) then
 				if (cfg.guildRankFormat == "title") then
-					text = text .. TT_COLOR.text.guildRank:WrapTextInColorCode(format(" %s", guildRankName));
+					text = text .. " " .. TT_COLOR.text.guildRank:WrapTextInColorCode(format("%s", guildRankName));
 				elseif (cfg.guildRankFormat == "both") then
-					text = text .. TT_COLOR.text.guildRank:WrapTextInColorCode(format(" %s (%s)", guildRankName, guildRankIndex));
+					text = text .. " " .. TT_COLOR.text.guildRank:WrapTextInColorCode(format("%s (%s)", guildRankName, guildRankIndex));
 				elseif (cfg.guildRankFormat == "level") then
-					text = text .. TT_COLOR.text.guildRank:WrapTextInColorCode(format(" %s", guildRankIndex));
+					text = text .. " " .. TT_COLOR.text.guildRank:WrapTextInColorCode(format("%s", guildRankIndex));
 				end
+			end
+			if (isForeignGuildRealm) and (cfg.showGuildRealm == "showInNewLine") then
+				text = text .. "\n" .. guildColor:WrapTextInColorCode(realm);
 			end
 			currentDisplayParams.mergeLevelLineWithGuildName = false;
 			if (not LibFroznFunctions.hasWoWFlavor.guildNameInPlayerUnitTip) then -- no separate line for guild name. merge with reaction (only color blind mode) or level line.

@@ -1076,3 +1076,23 @@ L["No characters with buffs found."] = "No se encontraron personajes con benefic
 L["Unknown Layer"] = "Capa desconocida";
 
 L["Active"] = "Activo";
+L["noZonesMappedYet"] = "Aún no se han mapeado zonas desde el reinicio del servidor.";
+L["Rend log adjusted"] = "Registro de Rend ajustado";
+
+L["flashDisableRendTitle"] = "Desactivar destello de Rend";
+L["flashDisableRendDesc"] = "Anular para desactivar todos los eventos de destello del cliente relacionados con Rend.";
+
+L["flashDisableOnyTitle"] = "Desactivar destello de Ony";
+L["flashDisableOnyDesc"] = "Anular para desactivar todos los eventos de destello del cliente relacionados con Ony/Nef.";
+
+L["flashDisableZanTitle"] = "Desactivar destello de Zan";
+L["flashDisableZanDesc"] = "Anular para desactivar todos los eventos de destello del cliente relacionados con Zandalar.";
+
+L["soundsFirstYellTitle"] = "Otros beneficios entrantes";
+L["soundsFirstYellDesc"] = "Sonido que se reproduce cuando se entregan beneficios de Zandalar/otros y tienes unos segundos antes de que se active el beneficio (primer grito del PNJ).";
+
+L["soundsFirstYellRendTitle"] = "Beneficio de Rend entrante";
+L["soundsFirstYellRendDesc"] = "Sonido que se reproduce cuando se entrega la cabeza de Rend y tienes unos segundos antes de que se active el beneficio (primer grito del PNJ).";
+
+L["soundsFirstYellOnyTitle"] = "Beneficio de Ony/Nef entrante";
+L["soundsFirstYellOnyDesc"] = "Sonido que se reproduce cuando se entrega la cabeza de Ony/Nef y tienes unos segundos antes de que se active el beneficio (primer grito del PNJ).";

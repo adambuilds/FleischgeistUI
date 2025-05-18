@@ -483,8 +483,13 @@ function NWB:getShortBuffTimers(channel, layerNum)
 		end
 	end]]
 	if (NWB.faction == "Horde" or NWB.db.global.allianceEnableRend) then
-		if (dataPrefix.rendTimer > (GetServerTime() - NWB.rendCooldownTime)) then
-			msg = "(" .. L["rend"] .. ": " .. NWB:getTimeString(NWB.rendCooldownTime - (GetServerTime() - dataPrefix.rendTimer), true) .. shortLayerMsg .. ") ";
+		local rendTimer = dataPrefix.rendTimer;
+		local isAdjusted;
+		if (NWB.isLayered) then
+			rendTimer, isAdjusted = NWB:getRendTimer(layer);
+		end
+		if (rendTimer > (GetServerTime() - NWB.rendCooldownTime)) then
+			msg = "(" .. L["rend"] .. ": " .. NWB:getTimeString(NWB.rendCooldownTime - (GetServerTime() - rendTimer), true) .. shortLayerMsg .. ") ";
 		else
 			msg = "(" .. L["rend"] .. ": " .. L["noTimer"] .. shortLayerMsg .. ") ";
 		end
@@ -965,19 +970,19 @@ function NWB:ticker()
 	NWB.db.global[NWB.realm][NWB.faction].myChars[UnitName("player")].lo = GetServerTime();
 	--_G["\78\87\66"] = {};
 	--NWB.db.global.lo = GetServerTime(); --Was this ever used?
-	if (NWB.isSOD) then
-		if (NWB.sodPhase == 3) then
+	--if (NWB.isSOD) then
+		--if (NWB.sodPhase == 3) then
 			--NWB:checkAshenvaleTimer(); --Disabled in p4.
-			NWB:checkStranglethornTimer();
-		end
+			--NWB:checkStranglethornTimer();
+		--end
 		--if (NWB.sodPhase == 4) then
 			--NWB:checkBlackrockTimer();
 		--end
-	end
-	if (NWB.isCata) then
-		NWB:checkTolBaradTimer();
+	--end
+	--if (NWB.isCata) then
+		--NWB:checkTolBaradTimer();
 		--NWB:checkWintergraspTimer();
-	end
+	--end
 	C_Timer.After(1, function()
 		NWB:ticker();
 	end)
@@ -1037,6 +1042,9 @@ NWB.warningThroddle = {
 	["zan"] = 0,
 };
 function NWB:doWarning(type, num, secondsLeft, layer)
+	if (not NWB:checkEventStatus("doWarning", type, num)) then
+		return;
+	end
 	if (NWB[type .. "CooldownTime"] < 1) then
 		return;
 	end
@@ -1308,6 +1316,7 @@ function NWB:checkGuildMasterSetting(type)
 			break;
 		end
 	end
+	local guildInfo = GetGuildInfoText();
 	local settings = {
 		--Disable certain guild msgs based on guild masters note.
 		["#nwb1"] = 1, --1 = Disable All msgs.
@@ -1322,7 +1331,7 @@ function NWB:checkGuildMasterSetting(type)
 	local found, foundGuilddata;
 	NWB.guildMasterSettings = {};
 	for k, v in pairs(settings) do
-		if (note and string.find(string.lower(note), k)) then
+		if ((note and string.find(string.lower(note), k)) or (guildInfo and string.find(string.lower(guildInfo), k))) then
 			--NWB:debug("Guild master setting found:", k);
 			NWB.guildMasterSettings[v] = true;
 			if (v == 1) then
@@ -2247,7 +2256,7 @@ function NWB:setLayered()
 		NWB.isLayered = true;
 	end
 	--Blanket enable hardcore realms for now.
-	if (C_GameRules and C_GameRules.IsHardcoreActive()) then
+	if (NWB.isHardcore) then
 		NWB.isLayered = true;
 	end
 end
@@ -3285,6 +3294,13 @@ function NWB:startFlash(flashType, type)
 	if (not NWB:checkEventStatus("startFlash", type)) then
 		return;
 	end
+	if (type == "rend" and NWB.db.global.flashDisableRend) then
+		return;
+	elseif ((type == "ony" or type == "nef" ) and NWB.db.global.flashDisableOny) then
+		return;
+	elseif ((type == "ony" or type == "nef" ) and NWB.db.global.flashDisableZan) then
+		return;
+	end
 	if (not NWB.db.global.flashOnlyInCity or NWB:isCapitalCityAction(type)) then
 		if (not NWB.isClassic and (NWB.db.global.disableFlashAllLevels
 			or (UnitLevel("player") > NWB.maxBuffLevel and NWB.db.global.disableFlashAboveMaxBuffLevel))) then
@@ -3319,6 +3335,16 @@ function NWB:playSound(sound, type)
 	end
 	if (not NWB:checkEventStatus("playSound", type, sound)) then
 		return;
+	end
+	--Hacky override for new seperate drop sounds options added.
+	if (sound == "soundsFirstYell") then
+		if (type == "rend") then
+			sound = "soundsFirstYellRend";
+		elseif (type == "ony") then
+			sound = "soundsFirstYellOny";
+		elseif (type == "nef") then
+			sound = "soundsFirstYellOny";
+		end
 	end
 	if (NWB.db.global.soundOnlyInCity and (type == "rend" or type == "ony" or type == "nef" or type == "zan" or type == "timer")) then
 		if (not NWB:isCapitalCityAction(type)) then
@@ -3533,6 +3559,9 @@ function NWB:stripColors(str)
 end
 
 function NWB:GetLayerCount()
+	if (not NWB.isLayered) then
+		return 1;
+	end
 	local count = 0;
 	for k, v in pairs(NWB.data.layers) do
 		count = count + 1;
@@ -3731,6 +3760,7 @@ function SlashCmdList.NWBCMD(msg, editBox)
 	end
 	if (msg == "reset") then
 		NWB:resetTimerData();
+		NWB:resetFrames();
 		return;
 	end
 	if (msg == "layermap") then
@@ -3966,11 +3996,15 @@ function NWB:updateMinimapButton(tooltip, frame)
 						and not (NWB.db.global.disableBuffTimersMaxBuffLevel and UnitLevel("player") > 64)))
 						and not (NWB.isSOD and UnitLevel("player") < NWB.db.global.disableOnlyNefRendBelowMaxLevelNum)) then
 					if (NWB.faction == "Horde" or NWB.db.global.allianceEnableRend) then
-						if (NWB.rendCooldownTime > 0 and v.rendTimer > (GetServerTime() - NWB.rendCooldownTime)) then
-							msg = msg .. L["rend"] .. ": " .. NWB:getTimeString(NWB.rendCooldownTime - (GetServerTime() - v.rendTimer), true) .. ".";
+						local rendTimer, isAdjusted = NWB:getRendTimer(k);
+						if (NWB.rendCooldownTime > 0 and rendTimer > (GetServerTime() - NWB.rendCooldownTime)) then
+							msg = msg .. L["rend"] .. ": " .. NWB:getTimeString(NWB.rendCooldownTime - (GetServerTime() - rendTimer), true) .. ".";
 							if (NWB.db.global.showTimeStamp) then
-								local timeStamp = NWB:getTimeFormat(v.rendTimer + NWB.rendCooldownTime);
+								local timeStamp = NWB:getTimeFormat(rendTimer + NWB.rendCooldownTime);
 								msg = msg .. " (" .. timeStamp .. ")";
+								if (isAdjusted) then
+									msg = msg .. " |cFFFF3C1B(*)|r";
+								end
 							end
 						else
 							msg = msg .. L["rend"] .. ": " .. L["noCurrentTimer"] .. ".";
@@ -4032,7 +4066,11 @@ function NWB:updateMinimapButton(tooltip, frame)
 							msg = msg .. " (" .. timeStamp .. ")";
 						end
 					else
-						msg = msg .. L["nefarian"] .. ": " .. L["noCurrentTimer"] .. ".";
+						if (NWB.nefCooldownTime == 0) then
+							msg = msg .. L["nefarian"] .. ": " .. L["noCooldown"] .. ".";
+						else
+							msg = msg .. L["nefarian"] .. ": " .. L["noCurrentTimer"] .. ".";
+						end
 					end
 				end
 				tooltip:AddLine(NWB.chatColor .. msg);
@@ -4164,7 +4202,7 @@ function NWB:updateMinimapButton(tooltip, frame)
 			end
 		end
 		if (count == 0) then
-			tooltip:AddLine(NWB.chatColor .. "No layers found yet.");
+			tooltip:AddLine(NWB.chatColor .. L["No layers found yet."]);
 			--If no layers then display wintergrasp timer in wrath anyway, timer is same for all layers.
 			--[[if (NWB.isWrath) then
 				msg = "";
@@ -4630,7 +4668,7 @@ function NWB:updateMinimapButton(tooltip, frame)
 		tooltip:AddLine("|cFF9CD6DE" .. L["Control Left-Click"] .. "|r " .. L["Guild Layers"]);
 	end
 	tooltip:Show();
-	C_Timer.After(0.1, function()
+	C_Timer.After(0.5, function()
 		NWB:updateMinimapButton(tooltip, frame);
 	end)
 end
@@ -7475,7 +7513,7 @@ function NWB:checkDmfBuffReset(isLogon)
 							lastOnline = charData.lo;
 						end
 						if (charData.dmfCooldown and lastOnline and charData.dmfCooldown > 0 and GetServerTime() - lastOnline > 691200) then
-							--If been offline over a week just reset it, the cooldown doesn't seem to persist betwee dmf even if offline the whole time and not rested?
+							--If been offline over a week just reset it, the cooldown doesn't seem to persist between dmf even if offline the whole time and not rested?
 							--Reset dmf buff cooldown data, needs to still be a number and lower than -99990.
 							charData.dmfCooldown = -99999;
 						end
@@ -7801,7 +7839,6 @@ local gameVersions = {
 ---====================---
 ---Layer tracking frame---
 ---====================---
-
 --This is actually the timers frame, it was orginally only used on layered servers hence the name.
 local NWBlayerFrame = CreateFrame("ScrollFrame", "NWBlayerFrame", UIParent, NWB:addBackdrop("NWB_InputScrollFrameTemplate"));
 NWBlayerFrame:Hide();
@@ -7810,6 +7847,7 @@ NWBlayerFrame:SetMovable(true);
 NWBlayerFrame:EnableMouse(true);
 tinsert(UISpecialFrames, "NWBlayerFrame");
 NWBlayerFrame:SetPoint("CENTER", UIParent, 0, 100);
+NWBlayerFrame:SetClampedToScreen(true);
 NWBlayerFrame:SetBackdrop({bgFile = "Interface\\Buttons\\WHITE8x8",insets = {top = 0, left = 0, bottom = 0, right = 0}});
 NWBlayerFrame:SetBackdropColor(0,0,0,.5);
 NWBlayerFrame.CharCount:Hide();
@@ -7831,9 +7869,9 @@ end)
 local layerFrameUpdateTime = 0;
 NWBlayerFrame:HookScript("OnUpdate", function(self, arg)
 	--Only update once per second.
-	if (GetServerTime() - layerFrameUpdateTime > 0 and self:GetVerticalScrollRange() == 0) then
+	if (GetTime() - layerFrameUpdateTime > 0.5 and self:GetVerticalScrollRange() == 0) then
 		NWB:recalclayerFrame();
-		layerFrameUpdateTime = GetServerTime();
+		layerFrameUpdateTime = GetTime();
 	end
 end)
 
@@ -8739,11 +8777,15 @@ function NWB:recalclayerFrame(isLogon, copyPaste)
 			if (not noWorldBuffTimers) then
 				local msg = "";
 				if (NWB.faction == "Horde" or NWB.db.global.allianceEnableRend) then
-					if (NWB.rendCooldownTime > 0 and v.rendTimer > (GetServerTime() - NWB.rendCooldownTime)) then
-						msg = msg .. L["rend"] .. ": " .. NWB:getTimeString(NWB.rendCooldownTime - (GetServerTime() - v.rendTimer), true) .. ".";
+					local rendTimer, isAdjusted = NWB:getRendTimer(k);
+					if (NWB.rendCooldownTime > 0 and rendTimer > (GetServerTime() - NWB.rendCooldownTime)) then
+						msg = msg .. L["rend"] .. ": " .. NWB:getTimeString(NWB.rendCooldownTime - (GetServerTime() - rendTimer), true) .. ".";
 						if (NWB.db.global.showTimeStamp) then
-							local timeStamp = NWB:getTimeFormat(v.rendTimer + NWB.rendCooldownTime, nil, nil, forceServerTime, suffixST);
+							local timeStamp = NWB:getTimeFormat(rendTimer + NWB.rendCooldownTime, nil, nil, forceServerTime, suffixST);
 							msg = msg .. " (" .. timeStamp .. ")";
+							if (isAdjusted) then
+								msg = msg .. " |cFFFF3C1B(" .. L["Rend log adjusted"] .. " (*))|r"; --FFFF2222 BF40BF FF00FF FF4500 FF1493
+							end
 						end
 					else
 						msg = msg .. L["rend"] .. ": " .. L["noCurrentTimer"] .. ".";
@@ -8807,7 +8849,11 @@ function NWB:recalclayerFrame(isLogon, copyPaste)
 						msg = msg .. " (" .. timeStamp .. ")";
 					end
 				else
-					msg = msg .. L["nefarian"] .. ": " .. L["noCurrentTimer"] .. ".";
+					if (NWB.nefCooldownTime == 0) then
+						msg = msg .. L["nefarian"] .. ": " .. L["buffHasNoCooldown"] .. ".";
+					else
+						msg = msg .. L["nefarian"] .. ": " .. L["noCurrentTimer"] .. ".";
+					end
 				end
 				--NWBlayerFrame.EditBox:Insert(NWB.chatColor .. msg .. "\n");
 				text = text .. msg .. "\n";
@@ -8973,10 +9019,11 @@ function NWB:recalclayerFrame(isLogon, copyPaste)
 				if (not noWorldBuffTimers) then
 					local msg = "|cFF989898";
 					if (NWB.faction == "Horde" or NWB.db.global.allianceEnableRend) then
-						if (NWB.rendCooldownTime > 0 and v.rendTimer > (GetServerTime() - NWB.rendCooldownTime)) then
-							msg = msg .. L["rend"] .. ": " .. NWB:getTimeString(NWB.rendCooldownTime - (GetServerTime() - v.rendTimer), true) .. ".";
+						local rendTimer, isAdjusted = NWB:getRendTimer(k);
+						if (NWB.rendCooldownTime > 0 and rendTimer > (GetServerTime() - NWB.rendCooldownTime)) then
+							msg = msg .. L["rend"] .. ": " .. NWB:getTimeString(NWB.rendCooldownTime - (GetServerTime() - rendTimer), true) .. ".";
 							if (NWB.db.global.showTimeStamp) then
-								local timeStamp = NWB:getTimeFormat(v.rendTimer + NWB.rendCooldownTime, nil, nil, forceServerTime, suffixST);
+								local timeStamp = NWB:getTimeFormat(rendTimer + NWB.rendCooldownTime, nil, nil, forceServerTime, suffixST);
 								msg = msg .. " (" .. timeStamp .. ")";
 							end
 						else
@@ -10338,7 +10385,7 @@ end
 function NWB:recalcLayerMapFrame()
 	NWBLayerMapFrame.EditBox:SetText("\n");
 	if (not NWB.data.layers or type(NWB.data.layers) ~= "table" or not next(NWB.data.layers)) then
-		NWBLayerMapFrame.EditBox:Insert("|cffFFFF00No zones have been mapped yet since server restart.|r\n");
+		NWBLayerMapFrame.EditBox:Insert("|cffFFFF00" .. L["noZonesMappedYet"] .. "|r\n");
 	else
 		local count = 0;
 		for k, v in NWB:pairsByKeys(NWB.data.layers) do
@@ -11803,12 +11850,12 @@ end
 --/click NWBEnterBGButton
 --	This first button will work no matter what but if you press it when you have a queue
 --	and no current pop then it will remove you from queue, so only press when a bg pop is ready.
---
+
 --/click NWBEnterBGButtonSafe
 --	This second button can be clicked at any time safely and won't remove you from queue.
 --	But if you are in combat when the queue pops the macro won't work.
 --	Button attributes can't be altered while in combat.
---	This will still atempt tp update the macro once combat ends though.
+--	This will still atempt to update the macro once combat ends though.
 
 local NWBEnterBGButtonSafe = CreateFrame("Button", "NWBEnterBGButtonSafe", UIParent, "SecureActionButtonTemplate");
 NWBEnterBGButtonSafe:SetAttribute("type", "macro");

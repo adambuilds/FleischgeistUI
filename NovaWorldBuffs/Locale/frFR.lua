@@ -1082,3 +1082,23 @@ L["No characters with buffs found."] = "Aucun personnage avec des buffs trouvé.
 L["Unknown Layer"] = "Couche inconnue";
 
 L["Active"] = "Actif";
+L["noZonesMappedYet"] = "Aucune zone n’a encore été cartographiée depuis le redémarrage du serveur.";
+L["Rend log adjusted"] = "Journal de Rend ajusté";
+
+L["flashDisableRendTitle"] = "Désactiver l’illumination de Rend";
+L["flashDisableRendDesc"] = "Forcer la désactivation de tous les événements d’illumination client liés à Rend.";
+
+L["flashDisableOnyTitle"] = "Désactiver l’illumination d’Ony";
+L["flashDisableOnyDesc"] = "Forcer la désactivation de tous les événements d’illumination client liés à Ony/Nef.";
+
+L["flashDisableZanTitle"] = "Désactiver l’illumination de Zan";
+L["flashDisableZanDesc"] = "Forcer la désactivation de tous les événements d’illumination client liés à Zandalar.";
+
+L["soundsFirstYellTitle"] = "Autres buffs en approche";
+L["soundsFirstYellDesc"] = "Son joué lorsque les buffs zand / autres sont remises, avec quelques secondes avant l’apparition du buff (premier cri du PNJ).";
+
+L["soundsFirstYellRendTitle"] = "Buff de Rend en approche";
+L["soundsFirstYellRendDesc"] = "Son joué lorsque la tête de Rend est remise, avec quelques secondes avant l’apparition du buff (premier cri du PNJ).";
+
+L["soundsFirstYellOnyTitle"] = "Buff Ony/Nef en approche";
+L["soundsFirstYellOnyDesc"] = "Son joué lorsque la tête d’Ony/Nef est remise, avec quelques secondes avant l’apparition du buff (premier cri du PNJ).";

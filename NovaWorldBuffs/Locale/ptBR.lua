@@ -1092,3 +1092,23 @@ L["No characters with buffs found."] = "Nenhum personagem com bônus encontrado.
 L["Unknown Layer"] = "Camada desconhecida";
 
 L["Active"] = "Ativo";
+L["noZonesMappedYet"] = "Nenhuma zona foi mapeada desde a reinicialização do servidor.";
+L["Rend log adjusted"] = "Registro de Rend ajustado";
+
+L["flashDisableRendTitle"] = "Desativar iluminação de Rend";
+L["flashDisableRendDesc"] = "Substitui para desativar todos os eventos de iluminação do cliente relacionados a Rend.";
+
+L["flashDisableOnyTitle"] = "Desativar iluminação de Ony";
+L["flashDisableOnyDesc"] = "Substitui para desativar todos os eventos de iluminação do cliente relacionados a Ony/Nef.";
+
+L["flashDisableZanTitle"] = "Desativar iluminação de Zan";
+L["flashDisableZanDesc"] = "Substitui para desativar todos os eventos de iluminação do cliente relacionados a Zandalar.";
+
+L["soundsFirstYellTitle"] = "Outros bônus entrantes";
+L["soundsFirstYellDesc"] = "Som reproduzido quando os bônus de zand/outros são entregues e há alguns segundos antes do bônus ser ativado (primeiro grito do NPC).";
+
+L["soundsFirstYellRendTitle"] = "Bônus de Rend entrante";
+L["soundsFirstYellRendDesc"] = "Som reproduzido quando a cabeça de Rend é entregue e há alguns segundos antes do bônus ser ativado (primeiro grito do NPC).";
+
+L["soundsFirstYellOnyTitle"] = "Bônus de Ony/Nef entrante";
+L["soundsFirstYellOnyDesc"] = "Som reproduzido quando a cabeça da Ony/Nef é entregue e há alguns segundos antes do bônus ser ativado (primeiro grito do NPC).";
