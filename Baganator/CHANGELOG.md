@@ -1,6 +1,7 @@
 # Baganator
 
-## [692](https://github.com/Baganator/Baganator/tree/692) (2025-05-17)
-[Full Changelog](https://github.com/Baganator/Baganator/compare/691...692) 
+## [695](https://github.com/Baganator/Baganator/tree/695) (2025-06-04)
+[Full Changelog](https://github.com/Baganator/Baganator/compare/694...695) 
 
-- Sorting: Add fallback for when max stack size information is unavailable  
+- Fix Shift+Click to collapse only applying to first child  
+- Support Shift+Clicking a section header to expand/collapse it and all children  
