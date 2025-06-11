@@ -404,7 +404,7 @@ function NWB:getGuildDataStatus()
 	if (not IsInGuild()) then
 		return;
 	end
-	GuildRoster();
+	C_GuildInfo.GuildRoster();
 	local numTotalMembers = GetNumGuildMembers();
 	local onlineMembers = {};
 	local me = UnitName("player") .. "-" .. GetNormalizedRealmName();
@@ -3667,7 +3667,7 @@ function NWB:recalcLFrame()
 	if (not IsInGuild()) then
 		NWBLFrame.EditBox:Insert("|cffFFFF00" .. L["layersNoGuild"] .. "\n");
 	else
-		GuildRoster();
+		C_GuildInfo.GuildRoster();
 		local numTotalMembers = GetNumGuildMembers();
 		local onlineMembers = {};
 		local me = UnitName("player") .. "-" .. GetNormalizedRealmName();

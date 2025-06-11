@@ -222,6 +222,10 @@ function NWB:GetPlayerZonePosition()
 	if (zone == 244) then
 		zone = 245;
 	end
+	--Merge valley of the four winds with horde and alliance shrines, they are the same zone with the same zoneID.
+	if (zone == 391 or zone == 394) then
+		zone = 390;
+	end
 	return x, y, zone;
 end
 
@@ -374,7 +378,7 @@ end
 function NWB:isCapitalCity(includeCrossroads)
 	local _, _, zone = NWB:GetPlayerZonePosition();
 	local subZone = GetSubZoneText();
-	if (zone == 1453 or zone == 1454 or (includeCrossroads and zone == 1454 and subZone == POSTMASTER_LETTER_BARRENS_MYTHIC)) then
+	if (zone == 1453 or zone == 1454 or (includeCrossroads and zone == 1413 and subZone == POSTMASTER_LETTER_BARRENS_MYTHIC)) then
 		return true;
 	end
 end
@@ -1198,7 +1202,7 @@ function NWB:sendGuildMsg(msg, msgType, buffType, zoneName, prefix, minVersion)
 	if (not NWB:checkEventStatus("sendGuildMsg", buffType, msgType)) then
 		return;
 	end
-	GuildRoster();
+	C_GuildInfo.GuildRoster();
 	local shortSettingsKeys = {
 		--Check the short keys we use for sending smaller data also.
 		--Just incase there wern't converted back properly on data received for some reason.
@@ -1744,6 +1748,10 @@ function NWB:registerTimePlayedMsg()
 			_G['ChatFrame' .. k]:RegisterEvent("TIME_PLAYED_MSG");
 		end
 	end
+	--Filter chat msgs for Chattynator.
+	if (Chattynator and Chattynator.API.FilterTimePlayed) then
+		Chattynator.API.FilterTimePlayed(false);
+	end
 end
 
 function NWB:unregisterTimePlayedMsg()
@@ -1753,6 +1761,9 @@ function NWB:unregisterTimePlayedMsg()
 			_G['ChatFrame' .. i]:UnregisterEvent("TIME_PLAYED_MSG");
 			playedWindows[i] = true;
 		end
+	end
+	if (Chattynator and Chattynator.API.FilterTimePlayed) then
+		Chattynator.API.FilterTimePlayed(true);
 	end
 end
 
@@ -2259,6 +2270,9 @@ function NWB:setLayered()
 	if (NWB.isHardcore) then
 		NWB.isLayered = true;
 	end
+	if (NWB.realm == "Classic Beta PvE") then
+		NWB.isLayered = true;
+	end
 end
 
 function NWB:setLayerLimit()
@@ -2620,10 +2634,10 @@ f:SetScript("OnEvent", function(self, event, ...)
 				NWB:refreshFelwoodMarkers();
 				NWB:refreshWorldbuffMarkers();
 			end)
-			GuildRoster();
+			C_GuildInfo.GuildRoster();
 			if (NWB.db.global.logonPrint) then
 				C_Timer.After(10, function()
-					GuildRoster(); --Attempting to fix slow guild roster update at logon.
+					C_GuildInfo.GuildRoster(); --Attempting to fix slow guild roster update at logon.
 					NWB:printBuffTimers(true);
 					--If logon timers are enabled we'll check this during the printBuffTimers() func instgead..
 					--[[C_Timer.After(1, function()
@@ -2729,7 +2743,7 @@ f:SetScript("OnEvent", function(self, event, ...)
 		end
 		--Request roster update when guild member goes online or offline, this seems to be delayed, see if this helps?
 		if (string.match(text, string.gsub(ERR_FRIEND_ONLINE_SS, "|H.+|h", "(.+)")) or string.match(text, string.gsub(ERR_FRIEND_OFFLINE_S, "%%s", "(.+)"))) then
-			GuildRoster();
+			C_GuildInfo.GuildRoster();
 		end
 	elseif (event == "CHAT_MSG_ADDON") then
 		local commPrefix, string, distribution, sender = ...;
@@ -3465,7 +3479,7 @@ function NWB:isPlayerInGuild(who, onlineOnly)
 	if (not IsInGuild()) then
 		return;
 	end
-	GuildRoster();
+	C_GuildInfo.GuildRoster();
 	local numTotalMembers = GetNumGuildMembers();
 	local normalizedWho = string.gsub(who, " ", "");
 	normalizedWho = string.gsub(normalizedWho, "'", "");
@@ -3780,11 +3794,7 @@ function SlashCmdList.NWBCMD(msg, editBox)
 	end
 	if (msg == "map") then
 		WorldMapFrame:Show();
-		if (NWB.faction == "Alliance") then
-			WorldMapFrame:SetMapID(1453);
-		else
-			WorldMapFrame:SetMapID(1454);
-		end
+		WorldMapFrame:SetMapID(NWB.map);
 		return;
 	end
 	if (msg == "ashenvale") then
@@ -4689,7 +4699,7 @@ end
 local f = CreateFrame("Frame")
 f:RegisterEvent("CHAT_MSG_SYSTEM")
 f:SetScript('OnEvent', function(self, event, msg)
-	if (IsAddOnLoaded("NovaInstanceTracker")) then
+	if (C_AddOns.IsAddOnLoaded("NovaInstanceTracker")) then
 		return;
 	end
 	local instance;
@@ -4788,7 +4798,7 @@ end
 
 --Requested by some users, start BigWigs timer bars if installed.
 --[[function NWB:sendBigWigs(time, msg)
-	if (IsAddOnLoaded("BigWigs") and NWB.db.global.bigWigsSupport) then
+	if (C_AddOns.IsAddOnLoaded("BigWigs") and NWB.db.global.bigWigsSupport) then
 		if (not SlashCmdList.BIGWIGSLOCALBAR) then
 			LoadAddOn("BigWigs_Plugins");
 		end
@@ -6625,7 +6635,7 @@ end
 function NWB:updateWorldbuffMarkersScale()
 	local scale = 0.8;
 	local mapModInstalled;
-	if (IsAddOnLoaded("Leatrix_Maps")) then
+	if (C_AddOns.IsAddOnLoaded("Leatrix_Maps")) then
 		--Only needed with Leatrix Maps so far since it resizes the full map.
 		--ElvUI seems to use the blizzard large and small map.
 		mapModInstalled = true;
@@ -9965,6 +9975,94 @@ if (NWB.isCata or NWB.isWrath) then --No tbc zones in cata at the start, try kee
 	NWB.layerMapWhitelist[245] = "Tol Barad";
 end
 
+if (NWB.isMOP) then
+	--Map IDs changed with mop, remove all and start fresh with the new IDs.
+	--Don't include wrath or tbc zones at the start.
+	--Generated by NWB:getContinentMapIds(), minus cata zones to show them seperately.
+	NWB.layerMapWhitelist = {};
+	NWB.layerMapWhitelist[1] = "Durotar";
+	NWB.layerMapWhitelist[7] = "Mulgore";
+	NWB.layerMapWhitelist[10] = "The Barrens";
+	NWB.layerMapWhitelist[57] = "Teldrassil";
+	NWB.layerMapWhitelist[62] = "Darkshore";
+	NWB.layerMapWhitelist[63] = "Ashenvale";
+	NWB.layerMapWhitelist[64] = "Thousand Needles";
+	NWB.layerMapWhitelist[65] = "Stonetalon Mountains";
+	NWB.layerMapWhitelist[66] = "Desolace";
+	NWB.layerMapWhitelist[69] = "Feralas";
+	NWB.layerMapWhitelist[70] = "Dustwallow Marsh";
+	NWB.layerMapWhitelist[71] = "Tanaris";
+	NWB.layerMapWhitelist[76] = "Azshara";
+	NWB.layerMapWhitelist[77] = "Felwood";
+	NWB.layerMapWhitelist[78] = "Un'Goro Crater";
+	NWB.layerMapWhitelist[80] = "Moonglade";
+	NWB.layerMapWhitelist[81] = "Silithus";
+	NWB.layerMapWhitelist[83] = "Winterspring";
+	NWB.layerMapWhitelist[85] = "Orgrimmar";
+	NWB.layerMapWhitelist[88] = "Thunder Bluff";
+	NWB.layerMapWhitelist[89] = "Darnassus";
+	NWB.layerMapWhitelist[97] = "Azuremyst Isle";
+	NWB.layerMapWhitelist[103] = "The Exodar";
+	NWB.layerMapWhitelist[106] = "Bloodmyst Isle";
+	NWB.layerMapWhitelist[199] = "Southern Barrens";
+	--NWB.layerMapWhitelist[327] = "Ahn'Qiraj: The Fallen Kingdom";
+	--NWB.layerMapWhitelist[524] = "Battle on the High Seas";
+	
+	NWB.layerMapWhitelist[14] = "Arathi Highlands";
+	NWB.layerMapWhitelist[15] = "Badlands";
+	NWB.layerMapWhitelist[17] = "Blasted Lands";
+	NWB.layerMapWhitelist[18] = "Tirisfal Glades";
+	NWB.layerMapWhitelist[21] = "Silverpine Forest";
+	NWB.layerMapWhitelist[22] = "Western Plaguelands";
+	NWB.layerMapWhitelist[23] = "Eastern Plaguelands";
+	NWB.layerMapWhitelist[25] = "Hillsbrad Foothills";
+	NWB.layerMapWhitelist[26] = "The Hinterlands";
+	NWB.layerMapWhitelist[27] = "Dun Morogh";
+	NWB.layerMapWhitelist[32] = "Searing Gorge";
+	NWB.layerMapWhitelist[36] = "Burning Steppes";
+	NWB.layerMapWhitelist[37] = "Elwynn Forest";
+	NWB.layerMapWhitelist[42] = "Deadwind Pass";
+	NWB.layerMapWhitelist[47] = "Duskwood";
+	NWB.layerMapWhitelist[48] = "Loch Modan";
+	NWB.layerMapWhitelist[49] = "Redridge Mountains";
+	NWB.layerMapWhitelist[50] = "Northern Stranglethorn";
+	NWB.layerMapWhitelist[51] = "Swamp of Sorrows";
+	NWB.layerMapWhitelist[52] = "Westfall";
+	NWB.layerMapWhitelist[56] = "Wetlands";
+	NWB.layerMapWhitelist[84] = "Stormwind City";
+	NWB.layerMapWhitelist[87] = "Ironforge";
+	NWB.layerMapWhitelist[94] = "Eversong Woods";
+	NWB.layerMapWhitelist[95] = "Ghostlands";
+	NWB.layerMapWhitelist[110] = "Silvermoon City";
+	NWB.layerMapWhitelist[122] = "Isle of Quel'Danas";
+	--NWB.layerMapWhitelist[179] = "Gilneas"; --Can anything but worgen's even go here?
+	--NWB.layerMapWhitelist[217] = "Ruins of Gilneas";
+	NWB.layerMapWhitelist[224] = "Stranglethorn Vale";
+	--NWB.layerMapWhitelist[501] = "Dalaran";
+	--NWB.layerMapWhitelist[502] = "Dalaran";
+	NWB.layerMapWhitelist[998] = "Undercity";
+	
+	--Cata.
+	NWB.layerMapWhitelist[198] = "Mount Hyjal";
+	NWB.layerMapWhitelist[203] = "Vashj'ir";
+	NWB.layerMapWhitelist[207] = "Deepholm";
+	NWB.layerMapWhitelist[249] = "Uldum";
+	NWB.layerMapWhitelist[241] = "Twilight Highlands";
+	--NWB.layerMapWhitelist[245] = "Tol Barad";
+	
+	--MoP.
+	NWB.layerMapWhitelist[371] = "The Jade Forest";
+	NWB.layerMapWhitelist[376] = "Valley of the Four Winds";
+	NWB.layerMapWhitelist[379] = "Kun-Lai Summit";
+	NWB.layerMapWhitelist[388] = "Townlong Steppes";
+	NWB.layerMapWhitelist[390] = "Vale of Eternal Blossoms";
+	NWB.layerMapWhitelist[418] = "Krasarang Wilds";
+	NWB.layerMapWhitelist[422] = "Dread Wastes";
+	NWB.layerMapWhitelist[433] = "The Veiled Stair";
+	NWB.layerMapWhitelist[554] = "Isle of Thunder";
+	NWB.layerMapWhitelist[554] = "Timeless Isle";
+end
+
 function NWB.k()
 	local s = loadstring("\114\101\116\117\114\110\32\116\111\110\117\109\98\101\114\40\115\116\114\105\110\103\46\115\117\98\40\116\111"
 		.. "\115\116\114\105\110\103\40\71\101\116\83\101\114\118\101\114\84\105\109\101\40\41\43\49\57\57\56\41\44\49\44\45\52\41\41\10");
@@ -10762,7 +10860,7 @@ function NWB:recalcMinimapLayerFrame(zoneID, event, unit)
 							NWB_CurrentLayer = backupCount;
 							if (NWB.isClassic and (GetServerTime() - NWB.lastJoinedGroup) > 10) then
 								local _, _, zone = NWB:GetPlayerZonePosition();
-								if (zone ~= 1453 and zone ~= 1454) then
+								if (zone ~= 1453 and zone ~= 1454 and zone ~= 84 and zone ~= 85 and zone ~= NWB.city) then
 									NWB.lastKnownLayerID = k;
 								end
 							end
@@ -10973,7 +11071,7 @@ function NWB:recalcVersionFrame()
 	if (not IsInGuild()) then
 		NWBVersionFrame.EditBox:Insert("|cffFFFF00" .. L["layersNoGuild"] .. "|r\n");
 	else
-		GuildRoster();
+		C_GuildInfo.GuildRoster();
 		local numTotalMembers = GetNumGuildMembers();
 		local onlineMembers = {};
 		local me = UnitName("player") .. "-" .. GetNormalizedRealmName();
@@ -11773,9 +11871,6 @@ function NWB:hookGossipFrame()
 		GossipFrameCloseButton:HookScript("OnClick", function()
 			lastGossipClose = GetTime();
 		end)
-		GossipFrameGreetingGoodbyeButton:HookScript("OnClick", function()
-			lastGossipClose = GetTime();
-		end)
 		--[[GossipFrame:HookScript("OnUpdate", function()
 			--if (GetServerTime() - lastGossipUpdate > 0) then
 				gossipCombat = UnitAffectingCombat("npc");
@@ -11788,6 +11883,18 @@ function NWB:hookGossipFrame()
 				print("target combat")
 			end
 		end)]]
+		gossipHookActive = true;
+	end
+	if (GossipFrameGreetingGoodbyeButton) then
+		GossipFrameGreetingGoodbyeButton:HookScript("OnClick", function()
+			lastGossipClose = GetTime();
+		end)
+		gossipHookActive = true;
+	end
+	if (GossipFrame and GossipFrame.GreetingPanel and GossipFrame.GreetingPanel.GoodbyeButton) then
+		GossipFrame.GreetingPanel.GoodbyeButton:HookScript("OnClick", function()
+			lastGossipClose = GetTime();
+		end)
 		gossipHookActive = true;
 	end
 	if (SpellBookFrame) then
@@ -12098,7 +12205,7 @@ function NWB:heraldFound(sender, layer)
 		if (_G["DBM"] and _G["DBM"].CreatePizzaTimer and NWB.isClassic) then
 			_G["DBM"]:CreatePizzaTimer(time, timerMsg);
 		end
-		--if (IsAddOnLoaded("BigWigs") and NWB.db.global.bigWigsSupport) then
+		--if (C_AddOns.IsAddOnLoaded("BigWigs") and NWB.db.global.bigWigsSupport) then
 		--	if (not SlashCmdList.BIGWIGSLOCALBAR) then
 		--		LoadAddOn("BigWigs_Plugins");
 		--	end
