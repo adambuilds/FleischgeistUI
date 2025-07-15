@@ -2201,17 +2201,19 @@ function ttif:ADDON_LOADED(event, addOnName, containsBindings)
 	end
 	-- now PVPRewardTemplate exists
 	if (addOnName == "Blizzard_PVPUI") or ((addOnName == MOD_NAME) and (LibFroznFunctions:IsAddOnFinishedLoading("Blizzard_PVPUI")) and (not addOnsLoaded['Blizzard_PVPUI'])) then
-		-- Function to apply necessary hooks to PVPRewardTemplate, see HonorFrameBonusFrame_Update() in "Blizzard_PVPUI/Blizzard_PVPUI.lua"
-		local buttons = {
-			HonorFrame.BonusFrame.RandomBGButton,
-			HonorFrame.BonusFrame.Arena1Button,
-			HonorFrame.BonusFrame.RandomEpicBGButton,
-			HonorFrame.BonusFrame.BrawlButton,
-			HonorFrame.BonusFrame.BrawlButton2
-		};
-		
-		for i, button in pairs(buttons) do
-			button.Reward.EnlistmentBonus:HookScript("OnEnter", HFBFB_OnEnter);
+		if (HonorFrame) and (HonorFrame.BonusFrame) then -- frame "HonorFrame.BonusFrame" doesn't exist in mopc
+			-- Function to apply necessary hooks to PVPRewardTemplate, see HonorFrameBonusFrame_Update() in "Blizzard_PVPUI/Blizzard_PVPUI.lua"
+			local buttons = {
+				HonorFrame.BonusFrame.RandomBGButton,
+				HonorFrame.BonusFrame.Arena1Button,
+				HonorFrame.BonusFrame.RandomEpicBGButton,
+				HonorFrame.BonusFrame.BrawlButton,
+				HonorFrame.BonusFrame.BrawlButton2
+			};
+			
+			for i, button in pairs(buttons) do
+				button.Reward.EnlistmentBonus:HookScript("OnEnter", HFBFB_OnEnter);
+			end
 		end
 		
 		if (addOnName == MOD_NAME) then
@@ -2835,10 +2837,10 @@ function LinkTypeFuncs:spell(isAura, source, link, linkType, spellID)
 			local rarityAtlas = C_Spell.GetMawPowerBorderAtlasBySpellID(spellID);
 			if (rarityAtlas) then
 				local rarityAtlasColors = { -- see table UiTextureAtlasElement name "jailerstower-animapowerlist-powerborder*"
-					["jailerstower-animapowerlist-powerborder-white"] = LibFroznFunctions:GetItemQualityColor(Enum.ItemQuality.Common),
-					["jailerstower-animapowerlist-powerborder-green"] = LibFroznFunctions:GetItemQualityColor(Enum.ItemQuality.Uncommon),
-					["jailerstower-animapowerlist-powerborder-blue"] = LibFroznFunctions:GetItemQualityColor(Enum.ItemQuality.Rare),
-					["jailerstower-animapowerlist-powerborder-purple"] = LibFroznFunctions:GetItemQualityColor(Enum.ItemQuality.Epic)
+					["jailerstower-animapowerlist-powerborder-white"] = LibFroznFunctions:GetItemQualityColor(LFF_ITEM_QUALITY.Common),
+					["jailerstower-animapowerlist-powerborder-green"] = LibFroznFunctions:GetItemQualityColor(LFF_ITEM_QUALITY.Uncommon),
+					["jailerstower-animapowerlist-powerborder-blue"] = LibFroznFunctions:GetItemQualityColor(LFF_ITEM_QUALITY.Rare),
+					["jailerstower-animapowerlist-powerborder-purple"] = LibFroznFunctions:GetItemQualityColor(LFF_ITEM_QUALITY.Epic)
 				};
 				if (rarityAtlasColors[rarityAtlas]) then
 					spellColor = rarityAtlasColors[rarityAtlas].color;
@@ -2906,13 +2908,13 @@ function LinkTypeFuncs:mawpower(link, linkType, mawPowerID)
 			local rarityAtlas = C_Spell.GetMawPowerBorderAtlasBySpellID(spellID);
 			if (rarityAtlas) then
 				if (rarityAtlas == "jailerstower-animapowerlist-powerborder-white") then -- see table UiTextureAtlasElement name "jailerstower-animapowerlist-powerborder*"
-					spellColor = LibFroznFunctions:GetItemQualityColor(Enum.ItemQuality.Common);
+					spellColor = LibFroznFunctions:GetItemQualityColor(LFF_ITEM_QUALITY.Common);
 				elseif (rarityAtlas == "jailerstower-animapowerlist-powerborder-green") then
-					spellColor = LibFroznFunctions:GetItemQualityColor(Enum.ItemQuality.Uncommon);
+					spellColor = LibFroznFunctions:GetItemQualityColor(LFF_ITEM_QUALITY.Uncommon);
 				elseif (rarityAtlas == "jailerstower-animapowerlist-powerborder-blue") then
-					spellColor = LibFroznFunctions:GetItemQualityColor(Enum.ItemQuality.Rare);
+					spellColor = LibFroznFunctions:GetItemQualityColor(LFF_ITEM_QUALITY.Rare);
 				elseif (rarityAtlas == "jailerstower-animapowerlist-powerborder-purple") then
-					spellColor = LibFroznFunctions:GetItemQualityColor(Enum.ItemQuality.Epic);
+					spellColor = LibFroznFunctions:GetItemQualityColor(LFF_ITEM_QUALITY.Epic);
 				end
 			end
 		end

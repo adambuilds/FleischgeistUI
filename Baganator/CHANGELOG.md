@@ -1,6 +1,6 @@
 # Baganator
 
-## [698](https://github.com/Baganator/Baganator/tree/698) (2025-06-16)
-[Full Changelog](https://github.com/Baganator/Baganator/compare/697...698) 
+## [705](https://github.com/Baganator/Baganator/tree/705) (2025-07-12)
+[Full Changelog](https://github.com/Baganator/Baganator/compare/704...705) 
 
-- Update toc for 11.1.7  
+- Refresh bags when Syndicator auction value source changes  

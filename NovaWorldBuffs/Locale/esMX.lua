@@ -1096,3 +1096,15 @@ L["soundsFirstYellRendDesc"] = "Sonido que se reproduce cuando se entrega la cab
 
 L["soundsFirstYellOnyTitle"] = "Beneficio de Ony/Nef entrante";
 L["soundsFirstYellOnyDesc"] = "Sonido que se reproduce cuando se entrega la cabeza de Ony/Nef y tienes unos segundos antes de que se active el beneficio (primer grito del PNJ).";
+
+L["showDisableLayerButtonsTitle"] = "Mostrar botón para desactivar capa"
+L["showDisableLayerButtonsDesc"] = "Muestra el botón para desactivar capa en el marco de temporizadores/capas.";
+
+L["Show Quest Handins Only"] = "Mostrar entregas de misiones";
+L["showQuestHandinsTooltip"] = "Muestra solo entradas del registro al entregar la misión de Rend.";
+
+L["resetFramesTitle"] = "Restablecer ventanas";
+L["resetFramesDesc"] = "Haz clic aquí para restablecer todas las posiciones de las ventanas al centro de la pantalla.";
+
+L["buffHasNoCooldown"] = "Este beneficio no activa un tiempo de reutilización";
+L["noCooldown"] = "Sin tiempo de reutilización";

@@ -1112,3 +1112,15 @@ L["soundsFirstYellRendDesc"] = "Som reproduzido quando a cabeça de Rend é entr
 
 L["soundsFirstYellOnyTitle"] = "Bônus de Ony/Nef entrante";
 L["soundsFirstYellOnyDesc"] = "Som reproduzido quando a cabeça da Ony/Nef é entregue e há alguns segundos antes do bônus ser ativado (primeiro grito do NPC).";
+
+L["showDisableLayerButtonsTitle"] = "Mostrar botão de desativar camada"
+L["showDisableLayerButtonsDesc"] = "Mostra o botão de desativar camada na janela de temporizadores/camadas.";
+
+L["Show Quest Handins Only"] = "Mostrar entregas de missões";
+L["showQuestHandinsTooltip"] = "Mostra apenas entradas do registro ao entregar a missão de Rend.";
+
+L["resetFramesTitle"] = "Redefinir janelas";
+L["resetFramesDesc"] = "Clique aqui para redefinir todas as janelas para o centro da tela.";
+
+L["buffHasNoCooldown"] = "Este bônus não ativa um tempo de recarga";
+L["noCooldown"] = "Sem tempo de recarga";

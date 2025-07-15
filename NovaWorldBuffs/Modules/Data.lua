@@ -907,6 +907,7 @@ function NWB:createDataLayered(distribution, noLayerMap, noLogs, type, forceLaye
 			--So there's no need to use the addon bandwidth every time we send.
 			--Also don't send layermap data with group joins.
 			sendLayerMap = true;
+			NWB:fixLayermaps();
 		end
 		for layer, v in NWB:pairsByKeys(NWB.data.layers) do
 			--Reset foundTimer with each loop so we don't send layermap data for layers with no timers later in the loop.
@@ -2954,12 +2955,12 @@ function NWB:createTimerLogMergeLayersCheckbox()
 		NWB.timerLogHandInOnlyButton:SetPoint("TOPLEFT", 5, -20);
 		--So strange the way to set text is to append Text to the global frame name.
 		NWBtimerLogHandInOnlyButtonText:SetText(L["Show Quest Handins Only"]);
-		NWB.timerLogHandInOnlyButton.tooltip = L["mergeLayersTooltip"];
+		NWB.timerLogHandInOnlyButton.tooltip = L["showQuestHandinsTooltip"];
 		NWB.timerLogHandInOnlyButton:SetFrameStrata("HIGH");
 		NWB.timerLogHandInOnlyButton:SetFrameLevel(3);
 		NWB.timerLogHandInOnlyButton:SetWidth(24);
 		NWB.timerLogHandInOnlyButton:SetHeight(24);
-		NWB.timerLogHandInOnlyButton:SetChecked(NWB.db.global.timerLogMergeLayers);
+		NWB.timerLogHandInOnlyButton:SetChecked(NWB.db.global.timerLogHandInOnly);
 		NWB.timerLogHandInOnlyButton:SetScript("OnClick", function()
 			local value = NWB.timerLogHandInOnlyButton:GetChecked();
 			NWB.db.global.timerLogHandInOnly = value;

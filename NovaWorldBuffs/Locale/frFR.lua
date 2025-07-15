@@ -1102,3 +1102,15 @@ L["soundsFirstYellRendDesc"] = "Son joué lorsque la tête de Rend est remise, a
 
 L["soundsFirstYellOnyTitle"] = "Buff Ony/Nef en approche";
 L["soundsFirstYellOnyDesc"] = "Son joué lorsque la tête d’Ony/Nef est remise, avec quelques secondes avant l’apparition du buff (premier cri du PNJ).";
+
+L["showDisableLayerButtonsTitle"] = "Afficher le bouton de désactivation de couche"
+L["showDisableLayerButtonsDesc"] = "Affiche le bouton de désactivation de couche sur la fenêtre des minuteries / couches.";
+
+L["Show Quest Handins Only"] = "Afficher les remises de quêtes";
+L["showQuestHandinsTooltip"] = "Affiche uniquement les entrées du journal lors de la remise de la quête de Rend.";
+
+L["resetFramesTitle"] = "Réinitialiser les fenêtres";
+L["resetFramesDesc"] = "Cliquez ici pour réinitialiser toutes les fenêtres au centre de l’écran.";
+
+L["buffHasNoCooldown"] = "Ce buff ne déclenche pas de temps de recharge";
+L["noCooldown"] = "Pas de temps de recharge";

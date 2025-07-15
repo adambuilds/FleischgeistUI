@@ -229,6 +229,16 @@ function NWB:GetPlayerZonePosition()
 	return x, y, zone;
 end
 
+function NWB:selectGossipOption(id)
+	local SelectGossipOption = SelectGossipOption;
+	if (C_GossipInfo and C_GossipInfo.SelectOptionByIndex) then
+		SelectGossipOption = C_GossipInfo.SelectOptionByIndex;
+		--C_GossipInfo.SelectOptionByIndex index starts at 0 so we need to minus 1.
+		id = id - 1;
+	end
+	SelectGossipOption(id);
+end
+
 --Print current buff timers to chat window.
 local npcRespawnTime = 360;
 function NWB:printBuffTimers(isLogon)
@@ -1729,7 +1739,7 @@ function NWB:printDmfPercent()
 		end
 	end
 	if (percent) then
-		NWB:print(string.format(L["dmfDamagePercent"], percent));
+		NWB:print(string.format(L["dmfDamagePercent"], "|cFF00C800" .. percent .. "|r"));
 	end
 end
 
@@ -4000,8 +4010,8 @@ function NWB:updateMinimapButton(tooltip, frame)
 			if (v.spawn and v.spawn > 0) then
 				ageText = " |cFF989898(" .. L["Active"] .. " " .. NWB:getTimeString(GetServerTime() - v.spawn, true, "short") .. ")|r ";
 			end
-			tooltip:AddLine("|cff00ff00[" .. L["Layer"] .. " " .. count .. "]|r  |cFF989898(" .. L["Zone"] .. " " .. k .. ") " .. ageText .. wintergraspTexture .. buffTextures .. "|r");
-			if (not noWorldBuffTimers) then
+			tooltip:AddLine("|cff00ff00[" .. L["Layer"] .. " " .. count .. "]|r  |cFF989898(" .. L["zone"] .. " " .. k .. ") " .. ageText .. wintergraspTexture .. buffTextures .. "|r");
+			if (not noWorldBuffTimers and NWB.expansionNum < 2) then
 				if ((NWB.isClassic or (not NWB.db.global.hideMinimapBuffTimers
 						and not (NWB.db.global.disableBuffTimersMaxBuffLevel and UnitLevel("player") > 64)))
 						and not (NWB.isSOD and UnitLevel("player") < NWB.db.global.disableOnlyNefRendBelowMaxLevelNum)) then
@@ -6254,7 +6264,11 @@ function NWB:updateWorldbuffMarkers(type, layer)
 			_G[type .. layer .. "NWBWorldMap"].fsLayer:SetText("|cff00ff00[" .. L["Layer"] .. " " .. count.. "] |cFFB5E0E6(" .. layerZoneID .. ")");
 		end
 		if (NWB.data.layers[layer]) then
-			time = (NWB.data.layers[layer][type .. "Timer"] + NWB[type .. "CooldownTime"]) - GetServerTime() or 0;
+			if (type == "rend") then
+				time = (NWB:getRendTimer(layer) + NWB[type .. "CooldownTime"]) - GetServerTime() or 0;
+			else
+				time = (NWB.data.layers[layer][type .. "Timer"] + NWB[type .. "CooldownTime"]) - GetServerTime() or 0;
+			end
 		else
 			time = 0;
 		end
@@ -8769,11 +8783,20 @@ function NWB:recalclayerFrame(isLogon, copyPaste)
 			if (not _G["NWBDisableLayerButton" .. count]) then
 				NWB:createDisableLayerButton(count);
 			end
-			--Make sure right button is shown.
-			if (_G["NWBEnableLayerButton" .. count]) then
-				_G["NWBEnableLayerButton" .. count]:Hide();
+			if (NWB.db.global.showDisableLayerButtons) then
+				--Make sure right button is shown.
+				if (_G["NWBEnableLayerButton" .. count]) then
+					_G["NWBEnableLayerButton" .. count]:Hide();
+				end
+				_G["NWBDisableLayerButton" .. count]:Show();
+			else
+				if (_G["NWBEnableLayerButton" .. count]) then
+					_G["NWBEnableLayerButton" .. count]:Hide();
+				end
+				if (_G["NWBDisableLayerButton" .. count]) then
+					_G["NWBDisableLayerButton" .. count]:Hide();
+				end
 			end
-			_G["NWBDisableLayerButton" .. count]:Show();
 			--Set the button beside the layer text, count the lines in the edit box to find right position.
 			--local _, lineCount = string.gsub(NWBlayerFrame.EditBox:GetText(), "\n", "");
 			local _, lineCount = string.gsub(text, "\n", "");
@@ -10320,11 +10343,6 @@ function NWB:isClassicCheck()
 	--end
 end
 
---Remove duplicate higher zones, see notes on above function validateZoneID().
---function NWB:fixLayermaps()
---
---end
-
 function NWB:resetLayerMaps()
 	if (NWB.db.global.resetLayerMaps) then
 		if (next(NWB.data.layers)) then
@@ -10480,11 +10498,24 @@ function NWB:openLayerMapFrame()
 	end
 end
 
+function NWB:fixLayermaps()
+	for k, v in pairs(NWB.data.layers) do
+		if (v.layerMap and next(v.layerMap)) then
+			for kk, vv in pairs(v.layerMap) do
+				if (type(kk) ~= "number") then
+					NWB.data.layers[k].layerMap[kk] = nil;
+				end
+			end
+		end
+	end
+end
+
 function NWB:recalcLayerMapFrame()
 	NWBLayerMapFrame.EditBox:SetText("\n");
 	if (not NWB.data.layers or type(NWB.data.layers) ~= "table" or not next(NWB.data.layers)) then
 		NWBLayerMapFrame.EditBox:Insert("|cffFFFF00" .. L["noZonesMappedYet"] .. "|r\n");
 	else
+		NWB:fixLayermaps();
 		local count = 0;
 		for k, v in NWB:pairsByKeys(NWB.data.layers) do
 			count = count + 1;
@@ -11168,86 +11199,86 @@ f:SetScript('OnEvent', function(self, event, ...)
 				--	return
 				--end
 				--if (string.match(g1, "I am ready to discover where my fortune lies!")) then
-				--	SelectGossipOption(1);
+				--	NWB:selectGossipOption(1);
 				--	return;
 				--end
 				if (g1 and not g2) then
 					--Pages with only 1 option.
-					SelectGossipOption(1);
+					NWB:selectGossipOption(1);
 					return;
 				end
 				if (buffType == "Damage") then
 					NWB:fastDmfDamageBuff();
 					--Sayge's Dark Fortune of Damage: +10% Damage (1, 1).
-					SelectGossipOption(1);
+					NWB:selectGossipOption(1);
 					--No need for string checks for dmg, it's 1, 1.
 					--if (string.match(g1, "I slay the man on the spot as my liege would expect me to do")) then
-					--	SelectGossipOption(1);
+					--	NWB:selectGossipOption(1);
 					--elseif (string.match(g1, "and do it in such a manner that he suffers painfully before he dies")) then
-					--	SelectGossipOption(1);
+					--	NWB:selectGossipOption(1);
 					--end
 					return;
 				end
 				if (buffType == "Agility") then
 					--Sayge's Dark Fortune of Agility: +10% Agility (3, 3).
 					if (g3 and string.match(g3, "I confiscate the corn he has stolen, warn him that stealing is a path towards doom")) then
-						SelectGossipOption(3);
+						NWB:selectGossipOption(3);
 					elseif (g3 and string.match(g3, "I would create some surreptitious means to keep my brother out of the order")) then
-						SelectGossipOption(3);
+						NWB:selectGossipOption(3);
 					end
 					return;
 				end
 				if (buffType == "Intelligence") then
 					--Sayge's Dark Fortune of Intelligence: +10% Intelligence (2, 2).
 					if (g2 and string.match(g2, "I turn over the man to my liege for punishment, as he has broken the law of the land")) then
-						SelectGossipOption(2);
+						NWB:selectGossipOption(2);
 					elseif (g2 and string.match(g2, "ignore the insult, hoping to instill a fear in the ruler that he may have gaffed")) then
-						SelectGossipOption(2);
+						NWB:selectGossipOption(2);
 					end
 					return;
 				end
 				if (buffType == "Spirit") then
 					--Sayge's Dark Fortune of Spirit: +10% Spirit (2, 1).
 					if (g2 and string.match(g2, "I turn over the man to my liege for punishment, as he has broken the law of the land")) then
-						SelectGossipOption(2);
+						NWB:selectGossipOption(2);
 					elseif (string.match(g1, "I confront the ruler on his malicious behavior, upholding my")) then
-						SelectGossipOption(1);
+						NWB:selectGossipOption(1);
 					end
 					return;
 				end
 				if (buffType == "Stamina") then
 					--Sayge's Dark Fortune of Stamina: +10% Stamina (3, 1).
 					if (g3 and string.match(g3, "I confiscate the corn he has stolen, warn him that stealing is a path towards doom")) then
-						SelectGossipOption(3);
+						NWB:selectGossipOption(3);
 					elseif (string.match(g1, "I would speak against my brother joining the order, rushing a permanent breech")) then
-						SelectGossipOption(1);
+						NWB:selectGossipOption(1);
 					end
 					return;
 				end
 				if (buffType == "Strength") then
 					--Sayge's Dark Fortune of Strength: +10% Strength (3, 2).
 					if (g3 and string.match(g3, "I confiscate the corn he has stolen, warn him that stealing is a path towards doom")) then
-						SelectGossipOption(3);
+						NWB:selectGossipOption(3);
 					elseif (g2 and string.match(g2, "I would speak for my brother joining the order, potentially risking the safety of the order")) then
-						SelectGossipOption(2);
+						NWB:selectGossipOption(2);
 					end
 					return;
 				end
 				if (buffType == "Armor") then
 					--Sayge's Dark Fortune of Armor: +10% Armor (1, 3).
 					if (string.match(g1, "I slay the man on the spot as my liege would expect me to do")) then
-						SelectGossipOption(1);
+						NWB:selectGossipOption(1);
 					elseif (string.match(g3 and g3, "I risk my own life and free him so that he may prove his innocence")) then
-						SelectGossipOption(3);
+						NWB:selectGossipOption(3);
 					end
 					return;
 				end
 				if (buffType == "Resistance") then
 					--Sayge's Dark Fortune of Resistance: +25 All Resistances (1, 2).
 					if (string.match(g1, "I slay the man on the spot as my liege would expect me to do")) then
-						SelectGossipOption(1);
+						NWB:selectGossipOption(1);
 					elseif (g2 and string.match(g2, "I execute him as per my liege's instructions, but doing so in as painless")) then
-						SelectGossipOption(2);
+						NWB:selectGossipOption(2);
 					end
 					return;
 				end
@@ -11262,42 +11293,42 @@ f:SetScript('OnEvent', function(self, event, ...)
 					--First buff selection page has 4 options, if there's 4 it can only be this page.
 					if (buffType == "Damage") then
 						--Sayge's Dark Fortune of Damage: +10% Damage (1, 1).
-						SelectGossipOption(1);
+						NWB:selectGossipOption(1);
 						return;
 					end
 					if (buffType == "Agility") then
 						--Sayge's Dark Fortune of Agility: +10% Agility (3, 3).
-						SelectGossipOption(3);
+						NWB:selectGossipOption(3);
 						return;
 					end
 					if (buffType == "Intelligence") then
 						--Sayge's Dark Fortune of Intelligence: +10% Intelligence (2, 2).
-						SelectGossipOption(2);
+						NWB:selectGossipOption(2);
 						return;
 					end
 					if (buffType == "Spirit") then
 						--Sayge's Dark Fortune of Spirit: +10% Spirit (2, 1).
-						SelectGossipOption(2);
+						NWB:selectGossipOption(2);
 						return;
 					end
 					if (buffType == "Stamina") then
 						--Sayge's Dark Fortune of Stamina: +10% Stamina (3, 1).
-						SelectGossipOption(3);
+						NWB:selectGossipOption(3);
 						return;
 					end
 					if (buffType == "Strength") then
 						--Sayge's Dark Fortune of Strength: +10% Strength (3, 2).
-						SelectGossipOption(3);
+						NWB:selectGossipOption(3);
 						return;
 					end
 					if (buffType == "Armor") then
 						--Sayge's Dark Fortune of Armor: +10% Armor (1, 3).
-						SelectGossipOption(1);
+						NWB:selectGossipOption(1);
 						return;
 					end
 					if (buffType == "Resistance") then
 						--Sayge's Dark Fortune of Resistance: +25 All Resistances (1, 2).
-						SelectGossipOption(1);
+						NWB:selectGossipOption(1);
 						return;
 					end
 				elseif (g3) then
@@ -11305,46 +11336,46 @@ f:SetScript('OnEvent', function(self, event, ...)
 					--Second buff selection page has 3 options, if there's 3 it can only be this page.
 					if (buffType == "Damage") then
 						--Sayge's Dark Fortune of Damage: +10% Damage (1, 1).
-						SelectGossipOption(1);
+						NWB:selectGossipOption(1);
 						return;
 					end
 					if (buffType == "Agility") then
 						--Sayge's Dark Fortune of Agility: +10% Agility (3, 3).
-						SelectGossipOption(3);
+						NWB:selectGossipOption(3);
 						return;
 					end
 					if (buffType == "Intelligence") then
-						SelectGossipOption(2);
+						NWB:selectGossipOption(2);
 						return;
 					end
 					if (buffType == "Spirit") then
 						--Sayge's Dark Fortune of Spirit: +10% Spirit (2, 1).
-						SelectGossipOption(1);
+						NWB:selectGossipOption(1);
 						return;
 					end
 					if (buffType == "Stamina") then
 						--Sayge's Dark Fortune of Stamina: +10% Stamina (3, 1).
-						SelectGossipOption(1);
+						NWB:selectGossipOption(1);
 						return;
 					end
 					if (buffType == "Strength") then
 						--Sayge's Dark Fortune of Strength: +10% Strength (3, 2).
-						SelectGossipOption(2);
+						NWB:selectGossipOption(2);
 						return;
 					end
 					if (buffType == "Armor") then
 						--Sayge's Dark Fortune of Armor: +10% Armor (1, 3).
-						SelectGossipOption(3);
+						NWB:selectGossipOption(3);
 						return;
 					end
 					if (buffType == "Resistance") then
 						--Sayge's Dark Fortune of Resistance: +25 All Resistances (1, 2).
-						SelectGossipOption(2);
+						NWB:selectGossipOption(2);
 						return;
 					end
 				elseif (g1 and not g2) then
 					--Pages with only 1 option.
-					SelectGossipOption(1);
+					NWB:selectGossipOption(1);
 				end
 				--NWB:print("Auto DMF buff selection only works for English client sorry, other languages coming soon.");
 			--end
@@ -11354,24 +11385,24 @@ f:SetScript('OnEvent', function(self, event, ...)
 		if (NWB.db.global.autoDireMaulBuff) then
 			--if (npcID == "14326" and string.match(g1, "What have you got for me")) then --Guard Mol'dar.
 			if (npcID == "14326") then --Guard Mol'dar.
-				SelectGossipOption(1);
+				NWB:selectGossipOption(1);
 				return;
 			--elseif (npcID == "14321" and string.match(g1, "Well what have you got for the new big dog of Gordok")) then --Guard Fengus.
 			elseif (npcID == "14321") then --Guard Fengus.
-				SelectGossipOption(1);
+				NWB:selectGossipOption(1);
 				return;
 			--elseif (npcID == "14323" and string.match(g1, "Yeah, you're a real brainiac")) then --Guard Slip'kik.
 			elseif (npcID == "14323") then --Guard Slip'kik.
-				SelectGossipOption(1);
+				NWB:selectGossipOption(1);
 				return;
 			--elseif (npcID == "14353" and string.match(g1, "I'm the new king")) then --Mizzle the Crafty.
 			elseif (npcID == "14353") then --Mizzle the Crafty.
-				SelectGossipOption(1);
+				NWB:selectGossipOption(1);
 				return;
 			elseif (npcID == "14325" and string.match(g1, "Um, I'm taking some prisoners")) then --Captain Komcrush.
 			--This needs string check because he can give you a quest afterwards also.
 			--elseif (npcID == "14325") then --Captain Komcrush.
-				SelectGossipOption(1);
+				NWB:selectGossipOption(1);
 				return;
 			end
 		end
@@ -11381,7 +11412,7 @@ f:SetScript('OnEvent', function(self, event, ...)
 			if (npcID == "179879") then
 				--There was an issue with shaman class quest and this auto gossip? Not sure if true but now we ignore if on the quest, and also check for single dialogue option.
 				if (#C_GossipInfo.GetOptions() == 1 and not C_QuestLog.IsOnQuest(85556) and not C_QuestLog.IsOnQuest(85557) and not C_QuestLog.IsOnQuest(85558)) then
-					SelectGossipOption(1);
+					NWB:selectGossipOption(1);
 					return;
 				end
 			end
@@ -11398,11 +11429,11 @@ function NWB:fastDmfDamageBuff()
 		return;
 	end
 	--speedtest = GetTime();
-	SelectGossipOption(1);
+	NWB:selectGossipOption(1);
 	fastBuffRunning = GetServerTime();
 	for i = 1, count do
 		C_Timer.After(i * delay, function()
-			SelectGossipOption(1);
+			NWB:selectGossipOption(1);
 		end)
 	end
 end
@@ -11449,7 +11480,7 @@ f:SetScript("OnEvent", function(self, event, ...)
 		end
 		if ((npcID == "2858" or npcID == "2859") and NWB.db.global.takeTaxiZG
 				and (GetServerTime() - NWB.lastZanBuffGained) <= NWB.db.global.buffHelperDelay) then
-			SelectGossipOption(1);
+			NWB:selectGossipOption(1);
 		end
 	elseif (event == "GOSSIP_CLOSED") then
 		choseDmfBuff = nil;
@@ -11481,7 +11512,7 @@ function NWB:buffDroppedTaxiNode(buffType, skipCheck)
 		end
 		--If we have npc chat open but didn't click to get to the fp map then do it.
 		if ((npcID == "2858" or npcID == "2859") and g1) then
-			SelectGossipOption(1);
+			NWB:selectGossipOption(1);
 		end
 		if (NWB.db.global.takeTaxiZG and (isTaxiMapOpened or skipCheck) and zone == 1434) then
 			NWB:takeTaxiNode(NWB.db.global.takeTaxiNodeZG);
