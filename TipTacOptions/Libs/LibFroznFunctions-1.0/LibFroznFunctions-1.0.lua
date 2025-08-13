@@ -9,7 +9,7 @@
 
 -- create new library
 local LIB_NAME = "LibFroznFunctions-1.0";
-local LIB_MINOR = 46; -- bump on changes
+local LIB_MINOR = 48; -- bump on changes
 
 if (not LibStub) then
 	error(LIB_NAME .. " requires LibStub.");
@@ -60,7 +60,7 @@ end
 --         .BCC        = true/false for BCC
 --         .WotLKC     = true/false for WotLKC
 --         .CataC      = true/false for CataC
---         .MoPC      = true/false for MoPC
+--         .MoPC       = true/false for MoPC
 --         .SL         = true/false for SL
 --         .DF         = true/false for DF
 --         .TWW        = true/false for TWW
@@ -106,17 +106,16 @@ LFF_GEAR_SCORE_ALGORITHM = {
 -- @return .guildNameInPlayerUnitTip                                   = true/false if the guild name is included in the player unit tip (since bc)
 --         .specializationAndClassTextInPlayerUnitTip                  = true/false if a specialization and class text is included in the player unit tip (since df 10.1.5)
 --         .rightClickForFrameSettingsTextInUnitTip                    = true/false if a right-click for frame settings is included in the unit tip (since tww 11.0.7)
---         .needsSuppressingErrorMessageAndSpeechWhenCallingCanInspect = true/false for suppressing error message and speech when calling CanInspect() (till wotlkc)
+--         .needsSuppressingErrorMessageAndSpeechWhenCallingCanInspect = true/false for suppressing error message and speech when calling CanInspect() (till mopc)
 --         .talentsAvailableForInspectedUnit                           = true/false if getting talents from other players is available (since bc 2.3.0)
 --         .numTalentTrees                                             = number of talent trees
 --         .talentIconAvailable                                        = true/false if talent icon is available (since bc)
---         .GetTalentTabInfoReturnValuesFromCataC                      = true/false if GetTalentTabInfo() return values from catac (only catac since catac 4.4.0)
 --         .roleIconAvailable                                          = true/false if role icon is available (since MoP 5.0.4)
 --         .specializationAvailable                                    = true/false if specialization is available (since MoP 5.0.4)
 --         .itemLevelOfFirstRaidTierSet                                = item level of first raid tier set. false if not defined (yet).
 --         .GameTooltipSetPaddingWithLeftAndTop                        = true/false if GameTooltip:SetPadding() has the optional left and top parameters (since BfA 8.2.0)
---         .GameTooltipFadeOutNotBeCalledForWorldFrameUnitTips         = true/false if GameTooltip:FadeOut() will not be called for worldframe unit tips (till wotlkc)
---         .barMarginAdjustment                                        = bar margin adjustment (till wotlkc)
+--         .GameTooltipFadeOutNotBeCalledForWorldFrameUnitTips         = true/false if GameTooltip:FadeOut() will not be called for worldframe unit tips (till mopc)
+--         .barMarginAdjustment                                        = bar margin adjustment (since bc till mopc)
 --         .experienceBarFrame                                         = frame of experience bar
 --         .experienceBarDockedToInterfaceBar                          = true/false if experience bar is docked to interface bar (till df 10.0.0)
 --         .realGetSpellLinkAvailable                                  = true/false if the real GetSpellLink() is available (since bc 2.3.0). in classic era this function only returns the spell name instead of a spell link.
@@ -133,7 +132,6 @@ LibFroznFunctions.hasWoWFlavor = {
 	talentsAvailableForInspectedUnit = true,
 	numTalentTrees = 2,
 	talentIconAvailable = true,
-	GetTalentTabInfoReturnValuesFromCataC = false,
 	roleIconAvailable = true,
 	specializationAvailable = true,
 	itemLevelOfFirstRaidTierSet = false,
@@ -168,7 +166,6 @@ if (LibFroznFunctions.isWoWFlavor.ClassicEra) or (LibFroznFunctions.isWoWFlavor.
 	LibFroznFunctions.hasWoWFlavor.needsSuppressingErrorMessageAndSpeechWhenCallingCanInspect = true;
 	LibFroznFunctions.hasWoWFlavor.GameTooltipSetPaddingWithLeftAndTop = false;
 	LibFroznFunctions.hasWoWFlavor.GameTooltipFadeOutNotBeCalledForWorldFrameUnitTips = true;
-	LibFroznFunctions.hasWoWFlavor.barMarginAdjustment = -2;
 	LibFroznFunctions.hasWoWFlavor.relatedExpansionForItemAvailable = false;
 end
 if (LibFroznFunctions.isWoWFlavor.BCC) or (LibFroznFunctions.isWoWFlavor.WotLKC) or (LibFroznFunctions.isWoWFlavor.SL) then
@@ -182,8 +179,8 @@ end
 if (LibFroznFunctions.isWoWFlavor.ClassicEra) or (LibFroznFunctions.isWoWFlavor.BCC) or (LibFroznFunctions.isWoWFlavor.WotLKC) or (LibFroznFunctions.isWoWFlavor.CataC) or (LibFroznFunctions.isWoWFlavor.MoPC) or (LibFroznFunctions.isWoWFlavor.SL) or (LibFroznFunctions.isWoWFlavor.DF) then
 	LibFroznFunctions.hasWoWFlavor.rightClickForFrameSettingsTextInUnitTip = false;
 end
-if (LibFroznFunctions.isWoWFlavor.CataC) then
-	LibFroznFunctions.hasWoWFlavor.GetTalentTabInfoReturnValuesFromCataC = true;
+if (LibFroznFunctions.isWoWFlavor.CataC) or (LibFroznFunctions.isWoWFlavor.MoPC) then
+	LibFroznFunctions.hasWoWFlavor.barMarginAdjustment = -1;
 end
 if (LibFroznFunctions.isWoWFlavor.MoPC) or (LibFroznFunctions.isWoWFlavor.SL) then
 	LibFroznFunctions.hasWoWFlavor.numTalentTrees = 0;
@@ -2426,6 +2423,8 @@ end
 --          .cancelButtonText    cancel button text
 --          .onShowHandler       optional. handler for OnShow event of popup. parameters: self, data
 --          .onAcceptHandler     optional. handler for OnAccept event (button pressed) of popup. parameters: self, data
+local SPWT_GameDialogResizeHooked = {};
+
 function LibFroznFunctions:ShowPopupWithText(params)
 	-- no params
 	if (not params) then
@@ -2445,9 +2444,9 @@ function LibFroznFunctions:ShowPopupWithText(params)
 				return;
 			end
 			
-			local info = StaticPopupDialogs[which];
+			local dialogInfo = StaticPopupDialogs[which];
 			
-			if (not info) or (not info.hideOnEscape) then
+			if (not dialogInfo) or (not dialogInfo.hideOnEscape) then
 				return;
 			end
 			
@@ -2463,7 +2462,7 @@ function LibFroznFunctions:ShowPopupWithText(params)
 			end
 		end
 		
-		StaticPopupDialogs[popupName] = { -- hopefully no taint, see "StaticPopup.lua"
+		local definition = {
 			showAlertGear = 1,
 			hasEditBox = 1,
 			editBoxWidth = 400,
@@ -2472,21 +2471,46 @@ function LibFroznFunctions:ShowPopupWithText(params)
 				local which = self.which;
 				
 				if (which) then
-					local info = StaticPopupDialogs[which];
+					local dialogInfo = StaticPopupDialogs[which];
 					
-					if (info) and (info.editBoxWidth and info.editBoxWidth > 260) then
-						local width = self:GetWidth() + (info.editBoxWidth - 260);
-						
-						self:SetWidth(width);
-						self.maxWidthSoFar = width;
+					if (dialogInfo) and (dialogInfo.editBoxWidth and dialogInfo.editBoxWidth > 260) then
+						if (self.Resize) then -- GameDialogMixin:Resize() available since tww 11.2.0
+							if (not SPWT_GameDialogResizeHooked[self]) then -- see GameDialogMixin:Resize() in "GameDialog.lua"
+								hooksecurefunc(self, "Resize", function(self)
+									local dialogInfo = self.dialogInfo;
+									
+									if (not dialogInfo) then
+										return;
+									end
+									
+									local data = self.data;
+									
+									if (not data) or (not data.considerEditBoxWidth) then
+										return;
+									end
+									
+									self:SetMinimumWidth(self:GetMinimumWidth() + (dialogInfo.editBoxWidth - 260 - 19));
+									self:Layout();
+								end);
+								
+								SPWT_GameDialogResizeHooked[self] = true;
+							end
+							
+							data.considerEditBoxWidth = true;
+						else -- before tww 11.2.0
+							local width = self:GetWidth() + (dialogInfo.editBoxWidth - 260);
+							
+							self:SetWidth(width);
+							self.maxWidthSoFar = width;
+						end
 					end
 				end
 				
 				-- consider icon, locked edit box text and OnShow handler
-				local editBox = self.editBox;
+				local editBox = (self.GetEditBox and self:GetEditBox() or self.editBox); -- acccessor method GetEditBox() available since tww 11.2.0
 				
 				if (data) then
-					local alertIcon = _G[self:GetName() .. "AlertIcon"];
+					local alertIcon = (self.AlertIcon or _G[self:GetName() .. "AlertIcon"]);
 					
 					if (alertIcon) then
 						alertIcon:SetTexture(data.iconFile);
@@ -2533,20 +2557,32 @@ function LibFroznFunctions:ShowPopupWithText(params)
 				end
 			end,
 			OnCancel = function(self, data)
-				local editBox = self.editBox;
+				local editBox = (self.GetEditBox and self:GetEditBox() or self.editBox); -- acccessor method GetEditBox() available since tww 11.2.0;
 				
 				editBoxOnEscapePressed(editBox, data);
 			end,
 			hideOnEscape = 1
 		};
+		
+		if (StaticPopup_AddDefinition) then -- since tww 11.2.0
+			StaticPopup_AddDefinition(popupName, definition);
+		else -- before tww 11.2.0
+			StaticPopupDialogs[popupName] = definition; -- hopefully no taint, see "StaticPopup.lua"
+		end
 	end
 	
 	-- set popup config
 	local staticPopupDialog = StaticPopupDialogs[popupName];
 	
 	staticPopupDialog.text = params.prompt;
-	staticPopupDialog.button1 = params.acceptButtonText;
-	staticPopupDialog.button2 = params.cancelButtonText;
+	
+	if (StaticPopup_SetButtonText) then -- since tww 11.2.0
+		StaticPopup_SetButtonText(popupName, 1, params.acceptButtonText);
+		StaticPopup_SetButtonText(popupName, 2, params.cancelButtonText);
+	else -- before tww 11.2.0
+		staticPopupDialog.button1 = params.acceptButtonText;
+		staticPopupDialog.button2 = params.cancelButtonText;
+	end
 	
 	-- show popup with text
 	StaticPopup_Show(popupName, nil, nil, {
@@ -3892,7 +3928,7 @@ function frameForDelayedInspection:CreateUnitCacheRecord(unitID, unitGUID)
 	unitCacheRecord.timestampLastInspect = 0;
 	unitCacheRecord.callbacks = LibFroznFunctions:CreatePushArray();
 	
-	unitCacheRecord.talents = LibFroznFunctions:AreTalentsAvailable(unitID);
+	unitCacheRecord.talents = LibFroznFunctions:AreTalentsAvailable(unitID, unitCacheRecord.isSelf);
 	unitCacheRecord.averageItemLevel = LibFroznFunctions:IsAverageItemLevelAvailable(unitID);
 	
 	return unitCacheRecord;
@@ -4138,6 +4174,7 @@ end
 -- check if talents are available
 --
 -- @param  unitID  unit id for unit, e.g. "player", "target" or "mouseover"
+-- @param  isSelf  true if it's the player unit, false otherwise.
 -- @return returns "LFF_TALENTS.available" if talents are available.
 --         returns "LFF_TALENTS.na" if no talents are available.
 --         returns nil if unit id is missing or not a player
@@ -4147,7 +4184,7 @@ LFF_TALENTS = {
 	none = 3 -- no talents found
 };
 
-function LibFroznFunctions:AreTalentsAvailable(unitID)
+function LibFroznFunctions:AreTalentsAvailable(unitID, isSelf)
 	-- no unit id or not a player
 	local isValidUnitID = (unitID) and (UnitIsPlayer(unitID));
 	
@@ -4183,7 +4220,8 @@ end
 --         returns nil if unit id is missing or not a player
 function LibFroznFunctions:GetTalents(unitID)
 	-- check if talents are available
-	local areTalentsAvailable = self:AreTalentsAvailable(unitID);
+	local isSelf = UnitIsUnit(unitID, "player");
+	local areTalentsAvailable = self:AreTalentsAvailable(unitID, isSelf);
 	
 	if (areTalentsAvailable ~= LFF_TALENTS.available) then
 		return areTalentsAvailable;
@@ -4191,7 +4229,6 @@ function LibFroznFunctions:GetTalents(unitID)
 	
 	-- get talents
 	local talents = {};
-	local isSelf = UnitIsUnit(unitID, "player");
 	
 	if (self.hasWoWFlavor.specializationAvailable) then -- retail, since MoP 5.0.4
 		local specializationName, specializationIcon, role, _;
@@ -4267,13 +4304,7 @@ function LibFroznFunctions:GetTalents(unitID)
 		local maxPointsSpent;
 		
 		for tabIndex = 1, numTalentTabs do
-			local _talentTabName, _talentTabIcon, _pointsSpent;
-			
-			if (self.hasWoWFlavor.GetTalentTabInfoReturnValuesFromCataC) then
-				_, _talentTabName, _, _talentTabIcon, _pointsSpent = GetTalentTabInfo(tabIndex, not isSelf, nil, activeTalentGroup);
-			else
-				_talentTabName, _talentTabIcon, _pointsSpent = GetTalentTabInfo(tabIndex, not isSelf, nil, activeTalentGroup);
-			end
+			local _, _talentTabName, _, _talentTabIcon, _pointsSpent = GetTalentTabInfo(tabIndex, not isSelf, nil, activeTalentGroup);
 			
 			tinsert(pointsSpent, _pointsSpent);
 			

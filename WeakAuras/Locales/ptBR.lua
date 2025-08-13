@@ -1121,8 +1121,6 @@ L["Include Death Runes"] = "Include Death Runes"
 --[[Translation missing --]]
 L["Include Pets"] = "Include Pets"
 --[[Translation missing --]]
-L["Include Reagent Bank"] = "Include Reagent Bank"
---[[Translation missing --]]
 L["Include War Band Bank"] = "Include War Band Bank"
 --[[Translation missing --]]
 L["Incoming Heal"] = "Incoming Heal"
@@ -1142,9 +1140,9 @@ L["Install the addons BugSack and BugGrabber for detailed error logs."] = "Insta
 L["Instance"] = "Instance"
 L["Instance Difficulty"] = "Dificuldade da Instância"
 --[[Translation missing --]]
-L["Instance ID"] = "Instance ID"
---[[Translation missing --]]
 L["Instance Id"] = "Instance Id"
+--[[Translation missing --]]
+L["Instance ID"] = "Instance ID"
 --[[Translation missing --]]
 L["Instance Info"] = "Instance Info"
 --[[Translation missing --]]
@@ -1773,9 +1771,9 @@ L["Progress Value"] = "Progress Value"
 L["Pulse"] = "Pulsar"
 L["PvP Flagged"] = "Marcado para JxJ"
 --[[Translation missing --]]
-L["PvP Talent Selected"] = "PvP Talent Selected"
---[[Translation missing --]]
 L["PvP Talent selected"] = "PvP Talent selected"
+--[[Translation missing --]]
+L["PvP Talent Selected"] = "PvP Talent Selected"
 --[[Translation missing --]]
 L["Quality Id"] = "Quality Id"
 --[[Translation missing --]]
@@ -2158,6 +2156,8 @@ L["Stage"] = "Stage"
 --[[Translation missing --]]
 L["Stage Counter"] = "Stage Counter"
 --[[Translation missing --]]
+L["Stagger"] = "Stagger"
+--[[Translation missing --]]
 L["Stagger (%)"] = "Stagger (%)"
 --[[Translation missing --]]
 L["Stagger against Target (%)"] = "Stagger against Target (%)"
@@ -2251,9 +2251,9 @@ L["Talent |cFFFF0000Not|r Selected"] = "Talent |cFFFF0000Not|r Selected"
 --[[Translation missing --]]
 L["Talent Known"] = "Talent Known"
 --[[Translation missing --]]
-L["Talent selected"] = "Talent selected"
---[[Translation missing --]]
 L["Talent Selected"] = "Talent Selected"
+--[[Translation missing --]]
+L["Talent selected"] = "Talent selected"
 L["Talent Specialization"] = "Especialização de talentos"
 --[[Translation missing --]]
 L["Tanking And Highest"] = "Tanking And Highest"
@@ -2289,6 +2289,8 @@ L["Texture Rotation"] = "Texture Rotation"
 L["Thaddius"] = "Thaddius"
 --[[Translation missing --]]
 L["The aura has overwritten the global '%s', this might affect other auras."] = "The aura has overwritten the global '%s', this might affect other auras."
+--[[Translation missing --]]
+L["The aura tried to overwrite the aura_env global, which is not allowed."] = "The aura tried to overwrite the aura_env global, which is not allowed."
 --[[Translation missing --]]
 L["The effective level differs from the level in e.g. Time Walking dungeons."] = "The effective level differs from the level in e.g. Time Walking dungeons."
 --[[Translation missing --]]

@@ -1,8 +1,6 @@
 # Syndicator
 
-## [218](https://github.com/Baganator/Syndicator/tree/218) (2025-07-13)
-[Full Changelog](https://github.com/Baganator/Syndicator/compare/217...218) 
+## [226](https://github.com/Baganator/Syndicator/tree/226) (2025-08-11)
+[Full Changelog](https://github.com/Baganator/Syndicator/compare/225...226) 
 
-- [Fixes #75] Search Builder: Fix menu entries sometimes going offscreen  
-- Search Builder: Fix Less than < auction value option not working  
-- Add auction value terms to search builder  
+- Fix "my class" to include two handed weapon variants on Evokers  

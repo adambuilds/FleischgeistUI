@@ -912,7 +912,6 @@ L["Include Bank"] = "Inclure la Banque"
 L["Include Charges"] = "Inclure charges"
 L["Include Death Runes"] = "Inclure les Runes de la mort"
 L["Include Pets"] = "Inclure les familiers"
-L["Include Reagent Bank"] = "Inclure la Banque de composants"
 L["Include War Band Bank"] = "Inclure la Banque de bataillon"
 L["Incoming Heal"] = "Soins en Cours"
 --[[Translation missing --]]
@@ -1424,9 +1423,9 @@ L["Progress Total"] = "Progrès Total"
 L["Progress Value"] = "Valeur de progression"
 L["Pulse"] = "Pulsation"
 L["PvP Flagged"] = "JcJ activé"
+L["PvP Talent selected"] = "Talent JcJ sélectionné"
 --[[Translation missing --]]
 L["PvP Talent Selected"] = "PvP Talent Selected"
-L["PvP Talent selected"] = "Talent JcJ sélectionné"
 --[[Translation missing --]]
 L["Quality Id"] = "Quality Id"
 --[[Translation missing --]]
@@ -1741,6 +1740,8 @@ L["Stage"] = "Stage"
 --[[Translation missing --]]
 L["Stage Counter"] = "Stage Counter"
 --[[Translation missing --]]
+L["Stagger"] = "Stagger"
+--[[Translation missing --]]
 L["Stagger (%)"] = "Stagger (%)"
 --[[Translation missing --]]
 L["Stagger against Target (%)"] = "Stagger against Target (%)"
@@ -1823,8 +1824,8 @@ L["Talent |cFFFF0000Not|r Known"] = "Talent |cFFFF0000Not|r Known"
 L["Talent |cFFFF0000Not|r Selected"] = "Talent |cFFFF0000Not|r Selected"
 --[[Translation missing --]]
 L["Talent Known"] = "Talent Known"
-L["Talent selected"] = "Talent sélectionné"
 L["Talent Selected"] = "Talent sélectionné"
+L["Talent selected"] = "Talent sélectionné"
 L["Talent Specialization"] = "Spécialisation"
 L["Tanking And Highest"] = "Tank et le plus haut"
 L["Tanking But Not Highest"] = "Tank mais pas le plus haut"
@@ -1857,6 +1858,8 @@ L["Texture Rotation"] = "Texture Rotation"
 L["Thaddius"] = "Thaddius"
 --[[Translation missing --]]
 L["The aura has overwritten the global '%s', this might affect other auras."] = "The aura has overwritten the global '%s', this might affect other auras."
+--[[Translation missing --]]
+L["The aura tried to overwrite the aura_env global, which is not allowed."] = "The aura tried to overwrite the aura_env global, which is not allowed."
 L["The effective level differs from the level in e.g. Time Walking dungeons."] = "Le niveau effectif diffère du niveau dans les donjons des Marcheurs du temps, par exemple."
 --[[Translation missing --]]
 L["The Four Horsemen"] = "The Four Horsemen"

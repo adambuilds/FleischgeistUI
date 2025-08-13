@@ -1114,3 +1114,21 @@ L["resetFramesDesc"] = "Cliquez ici pour réinitialiser toutes les fenêtres au 
 
 L["buffHasNoCooldown"] = "Ce buff ne déclenche pas de temps de recharge";
 L["noCooldown"] = "Pas de temps de recharge";
+
+L["Molten Core"] = "Cœur du Magma";
+L["Onyxia's Lair"] = "Repaire d'Onyxia";
+L["Blackwing Lair"] = "Repaire de l'Aile noire";
+L["Naxxramas"] = "Naxxramas";
+L["Karazhan"] = "Karazhan";
+L["The Shattered Halls"] = "Les Salles brisées";
+L["Serpentshrine Cavern"] = "Caverne du sanctuaire du Serpent";
+L["The Arcatraz"] = "L'Arcatraz";
+L["Black Morass"] = "Le Noir Marécage";
+L["Battle of Mount Hyjal"] = "La bataille du mont Hyjal";
+L["Black Temple"] = "Temple noir";
+L["Hellfire Citadel"] = "Citadelle des Flammes infernales";
+L["Coilfang Reservoir"] = "Réservoir de Glissecroc";
+L["Shadow Labyrinth"] = "Labyrinthe des ombres";
+L["Auchindoun"] = "Auchindoun";
+L["Tempest Keep"] = "Donjon de la Tempête";
+L["Caverns of Time"] = "Grottes du temps";

@@ -51,6 +51,8 @@ local TT_DefaultConfig = {
 	showMountIcon = true,
 	showMountText = true,
 	showMountSpeed = true,
+	showMountSource = true,
+	showMountLore = false,
 	nameType = "title",
 	showRealm = "show",
 	showTarget = "last",
@@ -258,6 +260,19 @@ local TT_DefaultConfig = {
 	anchorFrameTipTypeDuringChallengeMode = "normal",
 	anchorFrameTipPointDuringChallengeMode = "BOTTOMRIGHT",
 	
+	enableAnchorOverrideWorldUnitDuringInstance = false,
+	anchorWorldUnitTypeDuringInstance = "normal",
+	anchorWorldUnitPointDuringInstance = "BOTTOMRIGHT",
+	enableAnchorOverrideWorldTipDuringInstance = false,
+	anchorWorldTipTypeDuringInstance = "normal",
+	anchorWorldTipPointDuringInstance = "BOTTOMRIGHT",
+	enableAnchorOverrideFrameUnitDuringInstance = false,
+	anchorFrameUnitTypeDuringInstance = "normal",
+	anchorFrameUnitPointDuringInstance = "BOTTOMRIGHT",
+	enableAnchorOverrideFrameTipDuringInstance = false,
+	anchorFrameTipTypeDuringInstance = "normal",
+	anchorFrameTipPointDuringInstance = "BOTTOMRIGHT",
+	
 	enableAnchorOverrideWorldUnitDuringSkyriding = false,
 	anchorWorldUnitTypeDuringSkyriding = "normal",
 	anchorWorldUnitPointDuringSkyriding = "BOTTOMRIGHT",
@@ -301,6 +316,16 @@ local TT_DefaultConfig = {
 	hideTipsDuringChallengeModeItemTips = false,
 	hideTipsDuringChallengeModeActionTips = false,
 	hideTipsDuringChallengeModeExpBarTips = false,
+	
+	hideTipsDuringInstanceWorldUnits = false,
+	hideTipsDuringInstanceWorldTips = false,
+	hideTipsDuringInstanceFrameUnits = false,
+	hideTipsDuringInstanceFrameTips = false,
+	hideTipsDuringInstanceUnitTips = false,
+	hideTipsDuringInstanceSpellTips = false,
+	hideTipsDuringInstanceItemTips = false,
+	hideTipsDuringInstanceActionTips = false,
+	hideTipsDuringInstanceExpBarTips = false,
 	
 	hideTipsDuringSkyridingWorldUnits = false,
 	hideTipsDuringSkyridingWorldTips = false,
@@ -2129,6 +2154,8 @@ function tt:SetCurrentDisplayParams(tip, tipContent)
 	-- - e.g. if hovering over unit auras which will be hidden. there will be subsequent calls of GameTooltip:SetUnitAura() without a new GameTooltip:OnShow().
 	-- - e.g. if hovering over empty action bar buttons the GameTooltip:SetAction() will be called, but there's no tooltip. therefore no OnTooltipCleared() will
 	--	      be fired if leaving the button and the currentDisplayParams are still set. afterwards if moving to a world unit, we need firing the group event.
+	local currentTime = GetTime();
+	
 	if ((currentDisplayParams.isSet) or (currentDisplayParams.isSetTemporarily)) and (currentDisplayParams.isSetTimestamp ~= currentTime) then
 		self:ResetCurrentDisplayParams(tip, true); -- necessary to fire no group events here, e.g because "currentDisplayParams.defaultAnchored" will be lost.
 	end
@@ -2662,8 +2689,8 @@ function tt:SetBackdropAndBackdropBorderColorToTip(tip)
 	
 	local tipParams = frameParams.config;
 	
-	-- set backdrop to tip not possible
-	if (not cfg.enableBackdrop) or (not tipParams.applyAppearance) then
+	-- set backdrop and backdrop border color to tip not possible
+	if (not tipParams.applyAppearance) then
 		return;
 	end
 	
@@ -3072,6 +3099,20 @@ function tt:SetBackdropLocked(tip, backdropInfo)
 	
 	isSettingBackdropLocked = false;
 	
+	-- get tip parameters
+	local frameParams = TT_CacheForFrames[tip];
+	
+	if (not frameParams) then
+		return;
+	end
+	
+	local tipParams = frameParams.config;
+	
+	-- set backdrop to tip not possible
+	if (not cfg.enableBackdrop) or (not tipParams.applyAppearance) then
+		return;
+	end
+	
 	-- set locked backdrop info
 	local frameParams = TT_CacheForFrames[tip];
 	
@@ -3113,6 +3154,20 @@ function tt:SetBackdropColorLocked(tip, r, g, b, a)
 	
 	isSettingBackdropColorLocked = false;
 	
+	-- get tip parameters
+	local frameParams = TT_CacheForFrames[tip];
+	
+	if (not frameParams) then
+		return;
+	end
+	
+	local tipParams = frameParams.config;
+	
+	-- set backdrop color to tip not possible
+	if (not tipParams.applyAppearance) then
+		return;
+	end
+	
 	-- set backdrop color locked
 	local frameParams = TT_CacheForFrames[tip];
 	
@@ -3146,6 +3201,20 @@ function tt:SetBackdropBorderColorLocked(tip, r, g, b, a)
 	end
 	
 	isSettingBackdropBorderColorLocked = false;
+	
+	-- get tip parameters
+	local frameParams = TT_CacheForFrames[tip];
+	
+	if (not frameParams) then
+		return;
+	end
+	
+	local tipParams = frameParams.config;
+	
+	-- set backdrop border color to tip not possible
+	if (not tipParams.applyAppearance) then
+		return;
+	end
 	
 	-- set backdrop border color locked
 	local frameParams = TT_CacheForFrames[tip];
@@ -3181,6 +3250,20 @@ function tt:SetCenterColorLocked(tip, r, g, b, a)
 	
 	isSettingCenterColorLocked = false;
 	
+	-- get tip parameters
+	local frameParams = TT_CacheForFrames[tip];
+	
+	if (not frameParams) then
+		return;
+	end
+	
+	local tipParams = frameParams.config;
+	
+	-- set center color to tip not possible
+	if (not tipParams.applyAppearance) then
+		return;
+	end
+	
 	-- set center color locked
 	local frameParams = TT_CacheForFrames[tip];
 	
@@ -3214,6 +3297,20 @@ function tt:SetBorderColorLocked(tip, r, g, b, a)
 	end
 	
 	isSettingBorderColorLocked = false;
+	
+	-- get tip parameters
+	local frameParams = TT_CacheForFrames[tip];
+	
+	if (not frameParams) then
+		return;
+	end
+	
+	local tipParams = frameParams.config;
+	
+	-- set border color to tip not possible
+	if (not tipParams.applyAppearance) then
+		return;
+	end
 	
 	-- set border color locked
 	local frameParams = TT_CacheForFrames[tip];
@@ -3518,7 +3615,7 @@ function tt:GetAnchorPosition(tip)
 	local anchorFrameName = (LibFroznFunctions:WorldFrameIsMouseMotionFocus() and "World" or "Frame") .. (isUnit and "Unit" or "Tip");
 	local var = "anchor" .. anchorFrameName;
 	
-	-- consider anchor override during challenge mode, during skyriding or in combat
+	-- consider anchor override during challenge mode, instance, during skyriding or in combat
 	local anchorOverride = "";
 	
 	if (cfg["enableAnchorOverride" .. anchorFrameName .. "DuringChallengeMode"]) and (LibFroznFunctions.hasWoWFlavor.challengeMode) and (C_ChallengeMode.IsChallengeModeActive()) then
@@ -3536,6 +3633,10 @@ function tt:GetAnchorPosition(tip)
 				end
 			end
 		end
+	end
+	
+	if (anchorOverride == "") and (cfg["enableAnchorOverride" .. anchorFrameName .. "DuringInstance"]) and (IsInInstance()) then
+		anchorOverride = "DuringInstance";
 	end
 	
 	if (anchorOverride == "") and (cfg["enableAnchorOverride" .. anchorFrameName .. "DuringSkyriding"]) and (LibFroznFunctions.hasWoWFlavor.skyriding) then
@@ -4244,7 +4345,7 @@ LibFroznFunctions:RegisterForGroupEvents(MOD_NAME, {
 			return;
 		end
 		
-		-- consider hiding tips during challenge mode, during skyriding or in combat
+		-- consider hiding tips during challenge mode, instance, during skyriding or in combat
 		local hidingTip = "";
 		
 		if (LibFroznFunctions.hasWoWFlavor.challengeMode) and (C_ChallengeMode.IsChallengeModeActive()) then
@@ -4262,6 +4363,10 @@ LibFroznFunctions:RegisterForGroupEvents(MOD_NAME, {
 					end
 				end
 			end
+		end
+		
+		if (hidingTip == "") and (IsInInstance()) then
+			hidingTip = "DuringInstance";
 		end
 		
 		if (hidingTip == "") and (LibFroznFunctions.hasWoWFlavor.skyriding) then

@@ -14,10 +14,16 @@ local ejtt = EncounterJournalTooltip;
 -- get libs
 local LibFroznFunctions = LibStub:GetLibrary("LibFroznFunctions-1.0");
 
-local C_CurrencyInfo_GetCurrencyLink = C_CurrencyInfo.GetCurrencyLink;
-
-if (not C_CurrencyInfo_GetCurrencyLink) then
-	C_CurrencyInfo_GetCurrencyLink = GetCurrencyLink;
+local function C_CurrencyInfo_GetCurrencyLink(currencyID, currencyAmount)
+	local _currencyAmount = (currencyAmount or 0);
+	
+	-- since sl 9.0.1
+	if (C_CurrencyInfo) and (C_CurrencyInfo.GetCurrencyLink) then
+		return C_CurrencyInfo.GetCurrencyLink(currencyID, _currencyAmount);
+	end
+	
+	-- before sl 9.0.1
+	return GetCurrencyLink(currencyID, _currencyAmount);
 end
 
 local C_QuestLog_GetSelectedQuest = C_QuestLog.GetSelectedQuest;
@@ -638,9 +644,9 @@ function ttif:SetHyperlink_Hook(self, hyperlink)
 end
 
 -- HOOK: SetUnitAura + SetUnitBuff + SetUnitDebuff
-local function SetUnitAura_Hook(self, unit, index, filter)
+local function SetUnitAura_Hook(self, alternateFilterIfNotDefined, unit, index, filter)
 	if (cfg.if_enable) and (not tipDataAdded[self]) then
-		local auraData = LibFroznFunctions:GetAuraDataByIndex(unit, index, filter); -- [18.07.19] 8.0/BfA: "dropped second parameter"
+		local auraData = LibFroznFunctions:GetAuraDataByIndex(unit, index, filter or alternateFilterIfNotDefined); -- [18.07.19] 8.0/BfA: "dropped second parameter"
 		if (auraData) and (auraData.spellId) then
 			local link = LibFroznFunctions:GetSpellLink(auraData.spellId);
 			if (link) then
@@ -1920,9 +1926,15 @@ function ttif:ApplyHooksToTips(tips, resolveGlobalNamedObjects, addToTipsToModif
 				hooksecurefunc(tip, "SetHyperlink", function(self, ...)
 					ttif:SetHyperlink_Hook(self, ...)
 				end);
-				hooksecurefunc(tip, "SetUnitAura", SetUnitAura_Hook);
-				hooksecurefunc(tip, "SetUnitBuff", SetUnitAura_Hook);
-				hooksecurefunc(tip, "SetUnitDebuff", SetUnitAura_Hook);
+				hooksecurefunc(tip, "SetUnitAura", function(self, ...)
+					SetUnitAura_Hook(self, nil, ...);
+				end);
+				hooksecurefunc(tip, "SetUnitBuff", function(self, ...)
+					SetUnitAura_Hook(self, LFF_AURA_FILTERS.Helpful, ...);
+				end);
+				hooksecurefunc(tip, "SetUnitDebuff", function(self, ...)
+					SetUnitAura_Hook(self, LFF_AURA_FILTERS.Harmful, ...);
+				end);
 				hooksecurefunc(tip, "SetAction", SetAction_Hook);
 				hooksecurefunc(tip, "SetSpellBookItem", SetSpellBookItem_Hook);
 				hooksecurefunc(tip, "SetPetAction", SetPetAction_Hook);

@@ -148,8 +148,8 @@ Enable this setting if you want this timer to be hidden, or when using a WeakAur
 	L["Anchor Mode"] = "Режим крепления"
 	L["Anchor Point"] = "Точка крепления"
 	L["Anchored To"] = "Прикрепить к"
-	L["and"] = "и"
 	L["And "] = "И "
+	L["and"] = "и"
 	L["and %s"] = "и %s"
 	L["and aligned left"] = "Выранивание по левому краю;"
 	L["and aligned right"] = "Выранивание по правому краю;"
@@ -278,6 +278,8 @@ Off Screen]=] ] = [=[Индикация за
 	--[[Translation missing --]]
 	L["Custom Load"] = "Custom Load"
 	L["Custom Options"] = "Свои параметры"
+	--[[Translation missing --]]
+	L["Custom Text Update Throttle"] = "Custom Text Update Throttle"
 	L["Custom Trigger"] = "Свой триггер"
 	L["Custom trigger event tooltip"] = [=[Напишите события, которые будут вызывать проверку вашего триггера. Несколько событий должны быть разделены запятыми или пробелами.
 
@@ -288,6 +290,8 @@ UNIT_POWER  UNIT_AURA, PLAYER_TARGET_CHANGED]=]
 
 |cFF4444FFПример:|r
 UNIT_POWER  UNIT_AURA, PLAYER_TARGET_CHANGED]=]
+	--[[Translation missing --]]
+	L["Custom trigger Update Throttle"] = "Custom trigger Update Throttle"
 	L["Custom Trigger: Ignore Lua Errors on OPTIONS event"] = "Свой триггер: игнорировать ошибки Lua при событии OPTIONS"
 	L["Custom Trigger: Send fake events instead of STATUS event"] = "Свой триггер: отправлять фиктивные события вместо события STATUS"
 	--[[Translation missing --]]
@@ -671,6 +675,8 @@ every 3 events starting from 2nd and ending at 11th: 2-11/3]=] ] = "Время �
 	L["Re-center X"] = "Рецентрировать по X"
 	L["Re-center Y"] = "Рецентрировать по Y"
 	L["Reciprocal TRIGGER:# requests will be ignored!"] = "Ответный TRIGGER:# запрос будет проигнорирован!"
+	--[[Translation missing --]]
+	L["Redo"] = "Redo"
 	L["Regions of type \"%s\" are not supported."] = "Регионы типа \"%s\" не поддерживаются."
 	L["Remove"] = "Удалить"
 	L["Remove All Sounds"] = "Удалить все звуки"
@@ -789,7 +795,6 @@ every 3 events starting from 2nd and ending at 11th: 2-11/3]=] ] = "Время �
 	L["Spell Selection Filters"] = "Фильтры выбора заклинания"
 	L["Stack Info"] = "Информация о стаках"
 	L["Stacks - The number of stacks of an aura (usually)"] = "Стаки - количество стаков ауры (обычно)"
-	L["Stagger"] = "Выступ (смещение уровня)"
 	L["Standby"] = "Ожидает"
 	L["Star"] = "Звезда"
 	L["Start"] = "Начальная"
@@ -884,6 +889,8 @@ Upgrade your version of WeakAuras or wait for next release before installing thi
 	L["Trigger %i: %s"] = "Триггер %i: %s"
 	L["Trigger Combination"] = "Комбинация триггеров"
 	L["Type 'select' for '%s' requires a values member'"] = "Для переменной %s типа select необходимо свойство values."
+	--[[Translation missing --]]
+	L["Undo"] = "Undo"
 	L["Ungroup"] = "Разгруппировать"
 	L["Unit %s is not a valid unit for RegisterUnitEvent"] = "%s не является допустимой единицей для метода RegisterUnitEvent"
 	L["Unit Count"] = "Количество единиц"
@@ -900,8 +907,8 @@ Upgrade your version of WeakAuras or wait for next release before installing thi
 	L["Url: %s"] = "URL-адрес: %s"
 	L["Use Display Info Id"] = "Использовать ID отображения существа"
 	L["Use SetTransform"] = "Использовать ф. SetTransform"
-	L["Used in auras:"] = "Использовано в индикациях:"
 	L["Used in Auras:"] = "Использовано в индикациях:"
+	L["Used in auras:"] = "Использовано в индикациях:"
 	L["Uses Texture Coordinates to rotate the texture."] = "Использует координаты текстуры для её вращения."
 	L["Uses UnitIsVisible() to check if game client has loaded a object for this unit. This distance is around 100 yards. This is polled every second."] = "Использует функцию UnitIsVisible для проверки, может ли клиент игры видеть указанную единицу (загружен ли объект). Не определяет, находится ли единица в поле зрения. Расстояние составляет 100 метров. Опрос происходит каждую секунду."
 	L["Value"] = "Значение"

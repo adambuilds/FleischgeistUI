@@ -653,6 +653,33 @@ local function UsableCheck(details)
   end
 end
 
+local function ActiveCheck(details)
+  if not C_Item.IsItemDataCachedByID(details.itemID) then
+    C_Item.RequestLoadItemDataByID(details.itemID)
+    return
+  end
+  if not Syndicator.Utilities.IsEquipment(details.itemLink) then
+    return false
+  end
+  local upgradeInfo = C_Item.GetItemUpgradeInfo(details.itemLink)
+  if not upgradeInfo or not upgradeInfo.trackString then
+    return false
+  end
+
+  GetTooltipInfoSpell(details)
+
+  if details.tooltipInfoSpell then
+    for index = 1, math.min(#details.tooltipInfoSpell.lines, 4) do
+      local row = details.tooltipInfoSpell.lines[index]
+      local r, g, b = math.floor(row.leftColor.r * 100), math.floor(row.leftColor.g * 100), math.floor(row.leftColor.b * 100)
+      if r == g and g == b and r < 60 then
+        return false
+      end
+    end
+    return true
+  end
+end
+
 local function OpenCheck(details)
   if not details.itemLink:find("item:", nil, true) then
     return false
@@ -754,6 +781,21 @@ local function UniqueCheck(details)
 
   for _, row in ipairs(details.tooltipInfoSpell.lines) do
     if row.leftText == ITEM_UNIQUE then
+      return true
+    end
+  end
+  return false
+end
+
+local function ConjuredCheck(details)
+  GetTooltipInfoSpell(details)
+
+  if not details.tooltipInfoSpell then
+    return
+  end
+
+  for _, row in ipairs(details.tooltipInfoSpell.lines) do
+    if row.leftText == ITEM_CONJURED then
       return true
     end
   end
@@ -990,6 +1032,7 @@ AddKeywordLocalised("KEYWORD_UNCOLLECTED", UncollectedCheck, Syndicator.Locales.
 AddKeywordLocalised("KEYWORD_MY_CLASS", MyClassCheck, Syndicator.Locales.GROUP_ITEM_DETAIL)
 AddKeywordLocalised("KEYWORD_PVP", PvPCheck, Syndicator.Locales.GROUP_ITEM_DETAIL)
 AddKeywordManual(ITEM_UNIQUE:lower(), "unique", UniqueCheck, Syndicator.Locales.GROUP_ITEM_DETAIL)
+AddKeywordLocalised("KEYWORD_CONJURED", ConjuredCheck, Syndicator.Locales.GROUP_ITEM_DETAIL)
 AddKeywordLocalised("KEYWORD_LOCKED", LockedCheck, Syndicator.Locales.GROUP_ITEM_DETAIL)
 AddKeywordLocalised("KEYWORD_REFUNDABLE", RefundableCheck, Syndicator.Locales.GROUP_ITEM_DETAIL)
 AddKeywordLocalised("KEYWORD_CRAFTED", CraftedCheck, Syndicator.Locales.GROUP_ITEM_DETAIL)
@@ -1006,6 +1049,7 @@ if Syndicator.Constants.IsRetail then
   AddKeywordLocalised("KEYWORD_SET_BONUS", SetBonusCheck, Syndicator.Locales.GROUP_ITEM_DETAIL)
   AddKeywordLocalised("KEYWORD_CATALYST", CatalystCheck, Syndicator.Locales.GROUP_ITEM_DETAIL)
   AddKeywordLocalised("KEYWORD_CATALYST_UPGRADE", CatalystUpgradeCheck, Syndicator.Locales.GROUP_ITEM_DETAIL)
+  AddKeywordLocalised("KEYWORD_ACTIVE_SEASON", ActiveCheck, Syndicator.Locales.GROUP_ITEM_DETAIL)
   if Syndicator.Constants.WarbandBankActive then
     AddKeywordManual(ITEM_ACCOUNTBOUND:lower(), "warbound", BindOnAccountCheck, Syndicator.Locales.GROUP_BINDING_TYPE)
     AddKeywordManual(ITEM_ACCOUNTBOUND_UNTIL_EQUIP:lower(), "warbound until equipped", WarboundUntilEquippedCheck, Syndicator.Locales.GROUP_BINDING_TYPE)

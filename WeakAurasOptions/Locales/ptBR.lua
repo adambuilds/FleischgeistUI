@@ -224,9 +224,9 @@ Enable this setting if you want this timer to be hidden, or when using a WeakAur
 	L["Anchor Mode"] = "Anchor Mode"
 	L["Anchor Point"] = "Ponto da âncora"
 	L["Anchored To"] = "Ancorado a"
+	L["And "] = "E"
 	--[[Translation missing --]]
 	L["and"] = "and"
-	L["And "] = "E"
 	--[[Translation missing --]]
 	L["and %s"] = "and %s"
 	L["and aligned left"] = "e alinhado à esquerda"
@@ -403,6 +403,8 @@ Off Screen]=] ] = "Aura está fora da tela"
 	L["Custom Load"] = "Custom Load"
 	--[[Translation missing --]]
 	L["Custom Options"] = "Custom Options"
+	--[[Translation missing --]]
+	L["Custom Text Update Throttle"] = "Custom Text Update Throttle"
 	L["Custom Trigger"] = "Gatilho personalizado"
 	--[[Translation missing --]]
 	L["Custom trigger event tooltip"] = [=[Choose which events cause the custom trigger to be checked. Multiple events can be specified using commas or spaces.
@@ -425,6 +427,8 @@ Since this is a status-type trigger, the specified events may be called by WeakA
 |cFF4444FFFor example:|r
 UNIT_POWER_UPDATE:player, UNIT_AURA:nameplate:group PLAYER_TARGET_CHANGED CLEU:SPELL_CAST_SUCCESS TRIGGER:3:1
 ]=]
+	--[[Translation missing --]]
+	L["Custom trigger Update Throttle"] = "Custom trigger Update Throttle"
 	--[[Translation missing --]]
 	L["Custom Trigger: Ignore Lua Errors on OPTIONS event"] = "Custom Trigger: Ignore Lua Errors on OPTIONS event"
 	--[[Translation missing --]]
@@ -1083,6 +1087,8 @@ every 3 events starting from 2nd and ending at 11th: 2-11/3]=]
 	--[[Translation missing --]]
 	L["Reciprocal TRIGGER:# requests will be ignored!"] = "Reciprocal TRIGGER:# requests will be ignored!"
 	--[[Translation missing --]]
+	L["Redo"] = "Redo"
+	--[[Translation missing --]]
 	L["Regions of type \"%s\" are not supported."] = "Regions of type \"%s\" are not supported."
 	L["Remove"] = "Remover"
 	--[[Translation missing --]]
@@ -1273,8 +1279,6 @@ every 3 events starting from 2nd and ending at 11th: 2-11/3]=]
 	--[[Translation missing --]]
 	L["Stacks - The number of stacks of an aura (usually)"] = "Stacks - The number of stacks of an aura (usually)"
 	--[[Translation missing --]]
-	L["Stagger"] = "Stagger"
-	--[[Translation missing --]]
 	L["Standby"] = "Standby"
 	--[[Translation missing --]]
 	L["Star"] = "Star"
@@ -1439,6 +1443,8 @@ Upgrade your version of WeakAuras or wait for next release before installing thi
 	L["Trigger Combination"] = "Trigger Combination"
 	--[[Translation missing --]]
 	L["Type 'select' for '%s' requires a values member'"] = "Type 'select' for '%s' requires a values member'"
+	--[[Translation missing --]]
+	L["Undo"] = "Undo"
 	--[[Translation missing --]]
 	L["Ungroup"] = "Ungroup"
 	--[[Translation missing --]]

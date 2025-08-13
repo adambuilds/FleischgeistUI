@@ -1,6 +1,6 @@
 # Baganator
 
-## [705](https://github.com/Baganator/Baganator/tree/705) (2025-07-12)
-[Full Changelog](https://github.com/Baganator/Baganator/compare/704...705) 
+## [728](https://github.com/Baganator/Baganator/tree/728) (2025-08-13)
+[Full Changelog](https://github.com/Baganator/Baganator/compare/727...728) 
 
-- Refresh bags when Syndicator auction value source changes  
+- [Fixes #536] Fix changing shown character not changing bank view  

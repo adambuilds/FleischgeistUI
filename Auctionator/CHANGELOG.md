@@ -1,8 +1,6 @@
 # Auctionator
 
-## [283](https://github.com/Auctionator/Auctionator/tree/283) (2025-07-12)
-[Full Changelog](https://github.com/Auctionator/Auctionator/compare/282...283) 
+## [288](https://github.com/Auctionator/Auctionator/tree/288) (2025-08-04)
+[Full Changelog](https://github.com/Auctionator/Auctionator/compare/287...288) 
 
-- [Fixes #1696, Fixes #1698] Selling: Fix nil reference error for blank item slots  
-- Mists: Selling: Fix battle pets not showing in bag panel  
-- Use faster C\_EncodingUtil APIs when available (Mists + Retail)  
+- Fix error when posting too low price with "Post next item" enabled  

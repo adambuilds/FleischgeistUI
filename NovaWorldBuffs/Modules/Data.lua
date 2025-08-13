@@ -232,15 +232,28 @@ function NWB:OnCommReceived(commPrefix, string, distribution, sender)
 			NWB:sendLayerBuffs();
 		end
 	end
-	if (tonumber(remoteVersion) < 2.75) then
-		if (cmd == "requestData" and distribution == "GUILD") then
-			if (not NWB:getGuildDataStatus()) then
-				NWB:sendSettings("GUILD");
-			else
-				NWB:sendData("GUILD");
+	if (NWB.isMOP) then
+		if (tonumber(remoteVersion) < 3.11) then
+			if (cmd == "requestData" and distribution == "GUILD") then
+				if (not NWB:getGuildDataStatus()) then
+					NWB:sendSettings("GUILD");
+				else
+					NWB:sendData("GUILD");
+				end
 			end
+			return;
 		end
-		return;
+	else
+		if (tonumber(remoteVersion) < 2.75) then
+			if (cmd == "requestData" and distribution == "GUILD") then
+				if (not NWB:getGuildDataStatus()) then
+					NWB:sendSettings("GUILD");
+				else
+					NWB:sendData("GUILD");
+				end
+			end
+			return;
+		end
 	end
 	if (cmd == "data" or cmd == "settings") then
 		NWB:receivedData(data, sender, distribution, elapsed);
@@ -1295,6 +1308,10 @@ function NWB:validateCloseTimestamps(layer, key, timestamp)
 		--If buffs are syncing on both layers then skip this check for rend (Blizzard hotfix enabled 23/7/2020).
 		return true;
 	end
+	if (key == "spawn") then
+		--Layers can spawn at the same time on restart.
+		return true;
+	end
 	local offset = 30;
 	if (string.match(key, "flower") or key == "hellfireRep") then
 		offset = 10;
@@ -1652,7 +1669,9 @@ function NWB:receivedData(dataReceived, sender, distribution, elapsed)
 												--Rare bug someone has corrupt data (not sure how and it's never happened to me, but been reported).
 												--This will correct it by resetting thier timestamp to 0.
 												--NWB:debug("Local data error:", k, NWB.data[k]);
-												NWB.data.layers[layer][k] = 0;
+												--if (k ~= "spawn") then
+													NWB.data.layers[layer][k] = 0;
+												--end
 											end
 											if (enableLogging) then
 												NWB:timerLog(k, v, layer, nil, nil, distribution);
@@ -1732,13 +1751,15 @@ function NWB:receivedData(dataReceived, sender, distribution, elapsed)
 																NWB.data.layers[layer][k] = v;
 															end
 														elseif (k == "spawn") then
-															if (NWB.data.layers[layer] and NWB.data.layers[layer].spawn and NWB.data.layers[layer].spawn ~= 0) then
-																--Only record older spawn timestamps.
-																if (v < NWB.data.layers[layer].spawn) then
+															if (v ~= 0) then
+																if (NWB.data.layers[layer] and NWB.data.layers[layer].spawn and NWB.data.layers[layer].spawn ~= 0) then
+																	--Only record older spawn timestamps.
+																	if (v < NWB.data.layers[layer].spawn) then
+																		NWB.data.layers[layer][k] = v;
+																	end
+																else
 																	NWB.data.layers[layer][k] = v;
 																end
-															else
-																NWB.data.layers[layer][k] = v;
 															end
 														elseif (k == "created") then
 															if (NWB.data.layers[layer] and not NWB.data.layers[layer].created) then

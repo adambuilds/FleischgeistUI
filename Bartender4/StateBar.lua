@@ -12,8 +12,11 @@ local table_insert, table_concat, fmt = table.insert, table.concat, string.forma
 -- GLOBALS: InCombatLockdown, GetNumShapeshiftForms
 -- GLOBALS: MainMenuBarArtFrame, OverrideActionBar, RegisterStateDriver, UnregisterStateDriver
 
+local GetSpecialization = C_SpecializationInfo and C_SpecializationInfo.GetSpecialization or GetSpecialization
+
 local WoWRetail = (WOW_PROJECT_ID == WOW_PROJECT_MAINLINE)
 local WoWClassicEra = (WOW_PROJECT_ID == WOW_PROJECT_CLASSIC)
+local WoWClassicMists = (WOW_PROJECT_ID == WOW_PROJECT_MISTS_CLASSIC)
 
 local StateBar = setmetatable({}, {__index = ButtonBar})
 local StateBar_MT = {__index = StateBar}
@@ -102,7 +105,7 @@ DefaultStanceMap = setmetatable({}, { __index = function(t,k)
 			{ id = "stealth", name = Bartender4.Compat.GetSpellName(1784), index = 1 },
 			(not WoWClassicEra and not WoWRetail) and { id = "shadowdance", name = Bartender4.Compat.GetSpellName(51713), index = 2 } or nil,
 		}
-	elseif k ==  "WARRIOR" then
+	elseif k ==  "WARRIOR" and not WoWClassicMists then
 		newT = {
 			{ id = "battle", name = Bartender4.Compat.GetSpellName(2457), index = 1 },
 			{ id = "def", name = Bartender4.Compat.GetSpellName(71), index = 2 },
@@ -111,6 +114,12 @@ DefaultStanceMap = setmetatable({}, { __index = function(t,k)
 	elseif k == "PRIEST" and (not WoWClassicEra and not WoWRetail) then
 		newT = {
 			{ id = "shadowform", name = Bartender4.Compat.GetSpellName(15473), index = 1 },
+		}
+	elseif k == "MONK" then
+		newT = {
+			{ id = "tiger", name = Bartender4.Compat.GetSpellName(103985), index = 1 },
+			{ id = "ox", name = Bartender4.Compat.GetSpellName(115069), index = 2 },
+			{ id = "serpent", name = Bartender4.Compat.GetSpellName(115070), index = 3 },
 		}
 	end
 	rawset(t, k, newT)

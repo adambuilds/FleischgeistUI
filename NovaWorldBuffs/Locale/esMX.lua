@@ -189,7 +189,7 @@ L["Resist Fire"] = "Resistir al Fuego"; -- LBRS fire resist buff.
 L["Blessing of Blackfathom"] = "Bendición de Brazanegra";
 
 L["zan"] = "Zandalar";
-L["zanFirstYellMsg"] = "Zandalar realizará en %s segundos.";
+L["zanFirstYellMsg"] = "Zandalar caerá en %s segundos.";
 L["zanBuffDropped"] = "Espíritu de Zandalar (Hakkar) ha realizado.";
 L["singleSongflowerMsg"] = "Cantaflor en %s aparecerá en %s."; -- Songflower at Bloodvenom Post spawns at 1pm.
 L["spawn"] = "Aparición"; --Used in Felwood map marker tooltip (03:46pm spawn).
@@ -1108,3 +1108,21 @@ L["resetFramesDesc"] = "Haz clic aquí para restablecer todas las posiciones de 
 
 L["buffHasNoCooldown"] = "Este beneficio no activa un tiempo de reutilización";
 L["noCooldown"] = "Sin tiempo de reutilización";
+
+L["Molten Core"] = "Núcleo de Magma";
+L["Onyxia's Lair"] = "Guarida de Onyxia";
+L["Blackwing Lair"] = "Guarida de Alanegra";
+L["Naxxramas"] = "Naxxramas";
+L["Karazhan"] = "Karazhan";
+L["The Shattered Halls"] = "Las Salas Arrasadas";
+L["Serpentshrine Cavern"] = "Caverna Santuario Serpiente";
+L["The Arcatraz"] = "El Arcatraz";
+L["Black Morass"] = "La Ciénaga Negra";
+L["Battle of Mount Hyjal"] = "Batalla del Monte Hyjal";
+L["Black Temple"] = "Templo Oscuro";
+L["Hellfire Citadel"] = "Ciudadela del Fuego Infernal";
+L["Coilfang Reservoir"] = "Reserva Colmillo Torcido";
+L["Shadow Labyrinth"] = "Laberinto de las Sombras";
+L["Auchindoun"] = "Auchindoun";
+L["Tempest Keep"] = "El Castillo de la Tempestad";
+L["Caverns of Time"] = "Cavernas del Tiempo";
