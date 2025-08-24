@@ -1,6 +1,8 @@
 # Auctionator
 
-## [288](https://github.com/Auctionator/Auctionator/tree/288) (2025-08-04)
-[Full Changelog](https://github.com/Auctionator/Auctionator/compare/287...288) 
+## [290](https://github.com/Auctionator/Auctionator/tree/290) (2025-08-17)
+[Full Changelog](https://github.com/Auctionator/Auctionator/compare/289...290) 
 
-- Fix error when posting too low price with "Post next item" enabled  
+- Classic: Cancelling: Put auctions with bids on them at the top  
+- Retail: Cancelling: Sort auctions so that bids appear at the top  
+- Fix Shift+Click on search result when inserting into chat searching again  

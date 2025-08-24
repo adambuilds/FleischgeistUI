@@ -158,7 +158,7 @@ function ttStyle:RemoveUnwantedLinesFromTip(tip, unitRecord)
 	
 	local hideCreatureTypeIfNoCreatureFamily = ((not unitRecord.isPlayer) or (unitRecord.isWildBattlePet)) and (not creatureFamily) and (creatureType);
 	local hideSpecializationAndClassText = (cfg.hideSpecializationAndClassText) and (unitRecord.isPlayer) and (LibFroznFunctions.hasWoWFlavor.specializationAndClassTextInPlayerUnitTip) and (unitRecord.className);
-	local hideRightClickForFrameSettingsText = (cfg.hideRightClickForFrameSettingsText) and (LibFroznFunctions.hasWoWFlavor.rightClickForFrameSettingsTextInUnitTip) and (UNIT_POPUP_RIGHT_CLICK);
+	local hideRightClickForFrameSettingsTextInUnitTip = (cfg.hideRightClickForFrameSettingsTextInUnitTip) and (LibFroznFunctions.hasWoWFlavor.rightClickForFrameSettingsTextInUnitTip) and (UNIT_POPUP_RIGHT_CLICK);
 	
 	local specNames = LibFroznFunctions:CreatePushArray();
 	
@@ -177,7 +177,7 @@ function ttStyle:RemoveUnwantedLinesFromTip(tip, unitRecord)
 		local gttLineText = gttLine:GetText();
 		
 		if (type(gttLineText) == "string") then
-			local isGttLineTextUnitPopupRightClick = (hideRightClickForFrameSettingsText) and (gttLineText == UNIT_POPUP_RIGHT_CLICK);
+			local isGttLineTextUnitPopupRightClick = (hideRightClickForFrameSettingsTextInUnitTip) and (gttLineText == UNIT_POPUP_RIGHT_CLICK);
 			
 			if (isGttLineTextUnitPopupRightClick) or
 					((gttLineText == FACTION_ALLIANCE) or (gttLineText == FACTION_HORDE) or (gttLineText == FACTION_NEUTRAL)) or
@@ -630,13 +630,16 @@ function ttStyle:ModifyUnitTooltip(tip, currentDisplayParams, unitRecord, first)
 					-- determine if mount has already been collected
 					local mountText = LibFroznFunctions:CreatePushArray();
 					local spacer;
+					local mountIsCollected;
 					local mountNameAdded = false;
 					local mountSourceAdded = false;
 					
+					if (cfg.showMountCollected) or (cfg.showMountSourceIfNotCollected) then
+						mountIsCollected = LibFroznFunctions:IsMountCollected(mountID);
+					end
+					
 					if (cfg.showMountCollected) then
-						local isCollected = LibFroznFunctions:IsMountCollected(mountID);
-						
-						if (isCollected) then
+						if (mountIsCollected) then
 							-- mountText:Push(CreateAtlasMarkup("common-icon-checkmark")); -- available in DF, but not available in WotLKC
 							mountText:Push(CreateTextureMarkup("Interface\\AddOns\\" .. MOD_NAME .. "\\media\\CommonIcons", 64, 64, 0, 0, 0.000488281, 0.125488, 0.504883, 0.754883));
 						else
@@ -687,32 +690,58 @@ function ttStyle:ModifyUnitTooltip(tip, currentDisplayParams, unitRecord, first)
 					end
 					
 					-- determine mount source and lore
-					if (cfg.showMountSource) or (cfg.showMountLore) then
+					if (cfg.showMountSourceIfNotCollected) or (cfg.showMountSource) or (cfg.showMountLore) then
 						local _, description, source = C_MountJournal.GetMountInfoExtraByID(mountID);
 						
 						spacer = string.rep(" ", 4);
 						
-						if (cfg.showMountSource) and (type(source) == "string") and (strtrim(source) ~= "") then
-							if (mountText:GetCount() > 0) then
-								mountText:Push("\n");
+						if (cfg.showMountSourceIfNotCollected) and (not mountIsCollected) or (cfg.showMountSource) then
+							local cleanedSource = "";
+							
+							if (type(source) == "string") then
+								cleanedSource = strtrim(source);
+								
+								if (cleanedSource ~= "") then
+									cleanedSource = LibFroznFunctions:RemovePatternFromEndOfTextMultipleTimes(cleanedSource, "|n");
+									cleanedSource = LibFroznFunctions:RemoveColorsFromText(cleanedSource);
+								end
 							end
 							
-							mountText:Push(spacer .. TT_COLOR.text.mountSource:WrapTextInColorCode(source:gsub("|c%x%x%x%x%x%x%x%x(.-)|r", "%1"):gsub("|n", "|n" .. spacer)));
-							
-							mountSourceAdded = true;
+							if (cleanedSource ~= "") then
+								if (mountText:GetCount() > 0) then
+									mountText:Push("\n");
+								end
+								
+								mountText:Push(spacer .. TT_COLOR.text.mountSource:WrapTextInColorCode(cleanedSource:gsub("|n", "|n" .. spacer)));
+								
+								mountSourceAdded = true;
+							end
 						end
 						
-						if (cfg.showMountLore) and (type(description) == "string") and (strtrim(description) ~= "") then
-							local mountLoreText = TT_COLOR.text.mountLore:WrapTextInColorCode(description:gsub("|c%x%x%x%x%x%x%x%x(.-)|r", "%1"):gsub("|n", "|n" .. spacer));
+						if (cfg.showMountLore) then
+							local cleanedDescription = "";
 							
-							if (mountText:GetCount() > 0) then
-								if (mountSourceAdded) then
-									lineMountLore:Push("\n" .. spacer .. mountLoreText);
-								else
-									lineMountLore:Push(spacer .. mountLoreText);
+							if (type(description) == "string") then
+								cleanedDescription = strtrim(description);
+								
+								if (cleanedDescription ~= "") then
+									cleanedDescription = LibFroznFunctions:RemovePatternFromEndOfTextMultipleTimes(cleanedDescription, "|n");
+									cleanedDescription = LibFroznFunctions:RemoveColorsFromText(cleanedDescription);
 								end
-							else
-								lineMountLore:Push(TT_Mount:format(mountLoreText));
+							end
+							
+							if (cleanedDescription ~= "") then
+								local mountLoreText = TT_COLOR.text.mountLore:WrapTextInColorCode(cleanedDescription:gsub("|n", "|n" .. spacer));
+								
+								if (mountText:GetCount() > 0) then
+									if (mountSourceAdded) then
+										lineMountLore:Push("\n" .. spacer .. mountLoreText);
+									else
+										lineMountLore:Push(spacer .. mountLoreText);
+									end
+								else
+									lineMountLore:Push(TT_Mount:format(mountLoreText));
+								end
 							end
 						end
 					end

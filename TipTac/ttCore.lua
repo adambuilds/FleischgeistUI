@@ -51,7 +51,8 @@ local TT_DefaultConfig = {
 	showMountIcon = true,
 	showMountText = true,
 	showMountSpeed = true,
-	showMountSource = true,
+	showMountSourceIfNotCollected = true,
+	showMountSource = false,
 	showMountLore = false,
 	nameType = "title",
 	showRealm = "show",
@@ -66,7 +67,7 @@ local TT_DefaultConfig = {
 	showBattlePetTip = true,
 	hidePvpText = true,
 	hideSpecializationAndClassText = true,
-	hideRightClickForFrameSettingsText = true,
+	hideRightClickForFrameSettingsTextInUnitTip = true,
 	highlightTipTacDeveloper = true, -- hidden
 	
 	-- colors
@@ -247,6 +248,19 @@ local TT_DefaultConfig = {
 	anchorFrameTipType = "normal",
 	anchorFrameTipPoint = "BOTTOMRIGHT",
 	
+	enableAnchorOverrideWorldUnitDuringChallengeModeInCombat = false,
+	anchorWorldUnitTypeDuringChallengeModeInCombat = "normal",
+	anchorWorldUnitPointDuringChallengeModeInCombat = "BOTTOMRIGHT",
+	enableAnchorOverrideWorldTipDuringChallengeModeInCombat = false,
+	anchorWorldTipTypeDuringChallengeModeInCombat = "normal",
+	anchorWorldTipPointDuringChallengeModeInCombat = "BOTTOMRIGHT",
+	enableAnchorOverrideFrameUnitDuringChallengeModeInCombat = false,
+	anchorFrameUnitTypeDuringChallengeModeInCombat = "normal",
+	anchorFrameUnitPointDuringChallengeModeInCombat = "BOTTOMRIGHT",
+	enableAnchorOverrideFrameTipDuringChallengeModeInCombat = false,
+	anchorFrameTipTypeDuringChallengeModeInCombat = "normal",
+	anchorFrameTipPointDuringChallengeModeInCombat = "BOTTOMRIGHT",
+	
 	enableAnchorOverrideWorldUnitDuringChallengeMode = false,
 	anchorWorldUnitTypeDuringChallengeMode = "normal",
 	anchorWorldUnitPointDuringChallengeMode = "BOTTOMRIGHT",
@@ -272,6 +286,19 @@ local TT_DefaultConfig = {
 	enableAnchorOverrideFrameTipDuringInstance = false,
 	anchorFrameTipTypeDuringInstance = "normal",
 	anchorFrameTipPointDuringInstance = "BOTTOMRIGHT",
+	
+	enableAnchorOverrideWorldUnitDuringInstanceInCombat = false,
+	anchorWorldUnitTypeDuringInstanceInCombat = "normal",
+	anchorWorldUnitPointDuringInstanceInCombat = "BOTTOMRIGHT",
+	enableAnchorOverrideWorldTipDuringInstanceInCombat = false,
+	anchorWorldTipTypeDuringInstanceInCombat = "normal",
+	anchorWorldTipPointDuringInstanceInCombat = "BOTTOMRIGHT",
+	enableAnchorOverrideFrameUnitDuringInstanceInCombat = false,
+	anchorFrameUnitTypeDuringInstanceInCombat = "normal",
+	anchorFrameUnitPointDuringInstanceInCombat = "BOTTOMRIGHT",
+	enableAnchorOverrideFrameTipDuringInstanceInCombat = false,
+	anchorFrameTipTypeDuringInstanceInCombat = "normal",
+	anchorFrameTipPointDuringInstanceInCombat = "BOTTOMRIGHT",
 	
 	enableAnchorOverrideWorldUnitDuringSkyriding = false,
 	anchorWorldUnitTypeDuringSkyriding = "normal",
@@ -307,6 +334,16 @@ local TT_DefaultConfig = {
 	mouseOffsetY = 0,
 	
 	-- hiding
+	hideTipsDuringChallengeModeInCombatWorldUnits = false,
+	hideTipsDuringChallengeModeInCombatWorldTips = false,
+	hideTipsDuringChallengeModeInCombatFrameUnits = false,
+	hideTipsDuringChallengeModeInCombatFrameTips = false,
+	hideTipsDuringChallengeModeInCombatUnitTips = false,
+	hideTipsDuringChallengeModeInCombatSpellTips = false,
+	hideTipsDuringChallengeModeInCombatItemTips = false,
+	hideTipsDuringChallengeModeInCombatActionTips = false,
+	hideTipsDuringChallengeModeInCombatExpBarTips = false,
+	
 	hideTipsDuringChallengeModeWorldUnits = false,
 	hideTipsDuringChallengeModeWorldTips = false,
 	hideTipsDuringChallengeModeFrameUnits = false,
@@ -316,6 +353,16 @@ local TT_DefaultConfig = {
 	hideTipsDuringChallengeModeItemTips = false,
 	hideTipsDuringChallengeModeActionTips = false,
 	hideTipsDuringChallengeModeExpBarTips = false,
+	
+	hideTipsDuringInstanceInCombatWorldUnits = false,
+	hideTipsDuringInstanceInCombatWorldTips = false,
+	hideTipsDuringInstanceInCombatFrameUnits = false,
+	hideTipsDuringInstanceInCombatFrameTips = false,
+	hideTipsDuringInstanceInCombatUnitTips = false,
+	hideTipsDuringInstanceInCombatSpellTips = false,
+	hideTipsDuringInstanceInCombatItemTips = false,
+	hideTipsDuringInstanceInCombatActionTips = false,
+	hideTipsDuringInstanceInCombatExpBarTips = false,
 	
 	hideTipsDuringInstanceWorldUnits = false,
 	hideTipsDuringInstanceWorldTips = false,
@@ -1330,7 +1377,6 @@ tt:SetMovable(true);
 tt:EnableMouse(true);
 tt:SetToplevel(true);
 tt:SetClampedToScreen(true);
-tt:SetPoint("CENTER");
 
 tt.text = tt:CreateFontString(nil, "ARTWORK", "GameFontHighlight");
 tt.text:SetText(MOD_NAME .. "Anchor");
@@ -1354,13 +1400,35 @@ tt:SetScript("OnMouseUp", function(self)
 	cfg.left, cfg.top = self:GetLeft(), self:GetTop();
 end);
 
+-- show TipTac anchor on default position
+local function showTipTacAnchorOnDefaultPosition()
+	tt:ClearAllPoints();
+	-- tt:SetPoint("CENTER");
+	tt.SetOwner = function() end;
+	GameTooltip_SetDefaultAnchor(tt);
+	tt.SetOwner = nil;
+	
+	tt:Show();
+end
+
 -- register for group events
 LibFroznFunctions:RegisterForGroupEvents(MOD_NAME, {
 	OnConfigLoaded = function(self, TT_CacheForFrames, cfg, TT_ExtendedConfig)
-		-- set position of TipTac anchor
-		if (cfg.left) and (cfg.top) then
+		-- show TipTac anchor on default position if no position for it is set
+		if (not cfg.left) or (not cfg.top) then
+			showTipTacAnchorOnDefaultPosition()
+		
+		-- set position of TipTac anchor if position for it is set
+		else
 			tt:ClearAllPoints();
 			tt:SetPoint("TOPLEFT", UIParent, "BOTTOMLEFT", cfg.left, cfg.top);
+		
+		end
+	end,
+	OnApplyConfig = function(self, TT_CacheForFrames, cfg, TT_ExtendedConfig)
+		-- show TipTac anchor on default position if no position for it is set
+		if (not cfg.left) or (not cfg.top) then
+			showTipTacAnchorOnDefaultPosition()
 		end
 	end
 }, MOD_NAME .. " - TipTac Anchor");
@@ -1749,19 +1817,9 @@ function tt:SetupConfig()
 	TT_DefaultConfig.barFontFace, TT_DefaultConfig.barFontSize, TT_DefaultConfig.barFontFlags = NumberFontNormalSmall:GetFont();
 	TT_DefaultConfig.barFontSize = Round(TT_DefaultConfig.barFontSize);
 	TT_DefaultConfig.barFontFlags = TT_DefaultConfig.barFontFlags:match("^[^,]*");
-
-	-- set config
-	if (not TipTac_Config) then
-		-- create config
-		TipTac_Config = {};
-	end
 	
-	cfg = LibFroznFunctions:ChainTables(TipTac_Config, TT_DefaultConfig);
-
-	-- show TipTac anchor if no position for it is set
-	if (not cfg.left) or (not cfg.top) then
-		self:Show();
-	end
+	-- set config
+	cfg = select(2, LibFroznFunctions:CreateDbWithLibAceDB("TipTac_Config", TT_DefaultConfig));
 	
 	-- set custom class colors config
 	self:SetCustomClassColorsConfig();
@@ -3618,7 +3676,10 @@ function tt:GetAnchorPosition(tip)
 	-- consider anchor override during challenge mode, instance, during skyriding or in combat
 	local anchorOverride = "";
 	
-	if (cfg["enableAnchorOverride" .. anchorFrameName .. "DuringChallengeMode"]) and (LibFroznFunctions.hasWoWFlavor.challengeMode) and (C_ChallengeMode.IsChallengeModeActive()) then
+	local inCombat = UnitAffectingCombat("player");
+	local anchorOverridePartInCombat = (inCombat and "InCombat" or "");
+	
+	if (cfg["enableAnchorOverride" .. anchorFrameName .. "DuringChallengeMode" .. anchorOverridePartInCombat]) and (LibFroznFunctions.hasWoWFlavor.challengeMode) and (C_ChallengeMode.IsChallengeModeActive()) then
 		local difficultyID = select(3, GetInstanceInfo());
 		
 		if (difficultyID) then
@@ -3629,14 +3690,14 @@ function tt:GetAnchorPosition(tip)
 				local _, elapsedTime, timerType = GetWorldElapsedTime(timerID);
 				
 				if (timerType == LE_WORLD_ELAPSED_TIMER_TYPE_CHALLENGE_MODE) and (elapsedTime >= 0) then
-					anchorOverride = "DuringChallengeMode";
+					anchorOverride = "DuringChallengeMode" .. anchorOverridePartInCombat;
 				end
 			end
 		end
 	end
 	
-	if (anchorOverride == "") and (cfg["enableAnchorOverride" .. anchorFrameName .. "DuringInstance"]) and (IsInInstance()) then
-		anchorOverride = "DuringInstance";
+	if (anchorOverride == "") and (cfg["enableAnchorOverride" .. anchorFrameName .. "DuringInstance" .. anchorOverridePartInCombat]) and (IsInInstance()) then
+		anchorOverride = "DuringInstance" .. anchorOverridePartInCombat;
 	end
 	
 	if (anchorOverride == "") and (cfg["enableAnchorOverride" .. anchorFrameName .. "DuringSkyriding"]) and (LibFroznFunctions.hasWoWFlavor.skyriding) then
@@ -3647,7 +3708,7 @@ function tt:GetAnchorPosition(tip)
 		end
 	end
 	
-	if (anchorOverride == "") and (cfg["enableAnchorOverride" .. anchorFrameName .. "InCombat"]) and (UnitAffectingCombat("player")) then
+	if (anchorOverride == "") and (cfg["enableAnchorOverride" .. anchorFrameName .. "InCombat"]) and (inCombat) then
 		anchorOverride = "InCombat";
 	end
 	
@@ -4359,14 +4420,14 @@ LibFroznFunctions:RegisterForGroupEvents(MOD_NAME, {
 					local _, elapsedTime, timerType = GetWorldElapsedTime(timerID);
 					
 					if (timerType == LE_WORLD_ELAPSED_TIMER_TYPE_CHALLENGE_MODE) and (elapsedTime >= 0) then
-						hidingTip = "DuringChallengeMode";
+						hidingTip = "DuringChallengeMode" .. (UnitAffectingCombat("player") and "InCombat" or "");
 					end
 				end
 			end
 		end
 		
 		if (hidingTip == "") and (IsInInstance()) then
-			hidingTip = "DuringInstance";
+			hidingTip = "DuringInstance" .. (UnitAffectingCombat("player") and "InCombat" or "");
 		end
 		
 		if (hidingTip == "") and (LibFroznFunctions.hasWoWFlavor.skyriding) then
@@ -4482,6 +4543,14 @@ LibFroznFunctions:RegisterForGroupEvents(MOD_NAME, {
 			{
 				["25.07.07"] = function()
 					cfg.t_gearScoreAlgorithm = 2; -- LFF_GEAR_SCORE_ALGORITHM.TipTac, TipTac's GearScore algorithm
+				end
+			},
+			-- changes in config with 25.08.13:
+			--
+			-- renamed: hideRightClickForFrameSettingsText -> hideRightClickForFrameSettingsTextInUnitTip
+			{
+				["25.08.13"] = function()
+					cfg.hideRightClickForFrameSettingsTextInUnitTip = cfg.hideRightClickForFrameSettingsText;
 				end
 			}
 		};

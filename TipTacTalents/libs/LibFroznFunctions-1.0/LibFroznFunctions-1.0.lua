@@ -9,7 +9,7 @@
 
 -- create new library
 local LIB_NAME = "LibFroznFunctions-1.0";
-local LIB_MINOR = 48; -- bump on changes
+local LIB_MINOR = 49; -- bump on changes
 
 if (not LibStub) then
 	error(LIB_NAME .. " requires LibStub.");
@@ -106,6 +106,7 @@ LFF_GEAR_SCORE_ALGORITHM = {
 -- @return .guildNameInPlayerUnitTip                                   = true/false if the guild name is included in the player unit tip (since bc)
 --         .specializationAndClassTextInPlayerUnitTip                  = true/false if a specialization and class text is included in the player unit tip (since df 10.1.5)
 --         .rightClickForFrameSettingsTextInUnitTip                    = true/false if a right-click for frame settings is included in the unit tip (since tww 11.0.7)
+--         .clickForSettingsTextInCurrencyTip                          = true/false if a click for settings is included in the currency tip (since tww 11.0.0)
 --         .needsSuppressingErrorMessageAndSpeechWhenCallingCanInspect = true/false for suppressing error message and speech when calling CanInspect() (till mopc)
 --         .talentsAvailableForInspectedUnit                           = true/false if getting talents from other players is available (since bc 2.3.0)
 --         .numTalentTrees                                             = number of talent trees
@@ -128,6 +129,7 @@ LibFroznFunctions.hasWoWFlavor = {
 	guildNameInPlayerUnitTip = true,
 	specializationAndClassTextInPlayerUnitTip = true,
 	rightClickForFrameSettingsTextInUnitTip = true,
+	clickForSettingsTextInCurrencyTip = true,
 	needsSuppressingErrorMessageAndSpeechWhenCallingCanInspect = false,
 	talentsAvailableForInspectedUnit = true,
 	numTalentTrees = 2,
@@ -178,6 +180,7 @@ if (LibFroznFunctions.isWoWFlavor.ClassicEra) or (LibFroznFunctions.isWoWFlavor.
 end
 if (LibFroznFunctions.isWoWFlavor.ClassicEra) or (LibFroznFunctions.isWoWFlavor.BCC) or (LibFroznFunctions.isWoWFlavor.WotLKC) or (LibFroznFunctions.isWoWFlavor.CataC) or (LibFroznFunctions.isWoWFlavor.MoPC) or (LibFroznFunctions.isWoWFlavor.SL) or (LibFroznFunctions.isWoWFlavor.DF) then
 	LibFroznFunctions.hasWoWFlavor.rightClickForFrameSettingsTextInUnitTip = false;
+	LibFroznFunctions.hasWoWFlavor.clickForSettingsTextInCurrencyTip = false;
 end
 if (LibFroznFunctions.isWoWFlavor.CataC) or (LibFroznFunctions.isWoWFlavor.MoPC) then
 	LibFroznFunctions.hasWoWFlavor.barMarginAdjustment = -1;
@@ -905,6 +908,31 @@ function LibFroznFunctions:FormatText(text, replacements, ...)
 	return string.format(newText, ...);
 end
 
+-- remove pattern from end of text multiple times
+--
+-- @param  text     text to remove pattern from the end of multiple times
+-- @param  pattern  pattern to remove multiple times from end of text
+-- @return text with removed pattern from the end of multiple times
+function LibFroznFunctions:RemovePatternFromEndOfTextMultipleTimes(text, pattern)
+	local newText = tostring(text);
+	
+	newText = newText:gsub(pattern .. "$", "");
+	
+	if (newText == text) then
+		return newText;
+	end
+	
+	return self:RemovePatternFromEndOfTextMultipleTimes(newText, pattern);
+end
+
+-- remove colors from text
+--
+-- @param  text     text to remove colors from
+-- @return text with removed colors
+function LibFroznFunctions:RemoveColorsFromText(text)
+	return tostring(text):gsub("|c%x%x%x%x%x%x%x%x(.-)|r", "%1");
+end
+
 -- camel case text
 --
 -- @param  text  text to camel case, e.g. "warrior" or "WARRIOR"
@@ -1165,6 +1193,33 @@ local pushArray = {
 
 function LibFroznFunctions:CreatePushArray(optionalTable)
 	return setmetatable(optionalTable or {}, pushArray);
+end
+
+-- create linked table from table with key
+--
+-- @param  originalTable[]       original table
+-- @param  keyFromOriginalTable  key from original table
+-- @return table[]                 table linked to original table with key
+--         table.__GetLinkedTable  returns the key from the original table
+function LibFroznFunctions:CreateLinkedTableFromTableWithKey(originalTable, keyFromOriginalTable)
+	local linkedTableMeta = {
+		__index = function(tab, key, arg1)
+			if (key == "__GetLinkedTable") then
+				return originalTable[keyFromOriginalTable];
+			end
+			
+			return originalTable[keyFromOriginalTable][key];
+		end,
+		__newindex = function(tab, key, value)
+			originalTable[keyFromOriginalTable][key] = value;
+		end,
+		__call = function(tab, ...)
+		print("drin");
+			return originalTable(...);
+		end
+	};
+	
+	return setmetatable({}, linkedTableMeta);
 end
 
 -- check if item exists in table
@@ -1697,6 +1752,126 @@ function LibFroznFunctions:IsAddOnFinishedLoading(indexOrName)
 	local loaded, finished = C_AddOns.IsAddOnLoaded(indexOrName)
 	
 	return loaded and finished;
+end
+
+-- create database with lib AceDB-3.0
+--
+-- @param  tblNameOrObject  name of variable, or table to use for the database.
+-- @param  defaultConfig    optional. default config
+-- @return database
+local LibAceDB;
+
+function LibFroznFunctions:CreateDbWithLibAceDB(tblNameOrObject, defaultConfig)
+	-- get lib AceDB-3.0
+	if (not LibAceDB) then
+		LibAceDB = LibStub:GetLibrary("AceDB-3.0");
+	end
+	
+	-- get table the database should use
+	local tbl;
+	
+	if (type(tblNameOrObject) == "string") then
+		-- lookup the global object for this table name
+		tbl = self:GetValueFromObjectByPath(_G, tblNameOrObject);
+	else
+		tbl = tblNameOrObject;
+	end
+	
+	-- consider, that the original config before using lib AceDB-3.0 needs to be taken over.
+	local orgConfig;
+	
+	if (type(tbl) == "table") and (not tbl.profiles) then
+		orgConfig = tbl;
+	end
+	
+	-- create new database. consider that the database can already be registered in lib AceDB-3.0.
+	local db = self:GetDbFromLibAceDB(tblNameOrObject);
+	
+	if (db) then
+		-- database is already registered in lib AceDB-3.0. register additional defaults if necessary.
+		if (defaultConfig) then
+			local newDefaults = db.defaults.profile;
+			
+			MergeTable(newDefaults, defaultConfig);
+			db:RegisterDefaults({ profile = newDefaults });
+		end
+	else
+		-- database doesn't exists in lib AceDB-3.0 yet. create new database
+		db = LibAceDB:New(tblNameOrObject, (defaultConfig and { profile = defaultConfig } or nil), true);
+	end
+	
+	-- consider, that the original config before using lib AceDB-3.0 needs to be taken over.
+	if (orgConfig) then
+		local cfg = db.profile;
+		
+		MergeTable(cfg, orgConfig);
+	end
+	
+	return db, self:CreateLinkedTableFromTableWithKey(db, "profile");
+end
+
+-- get database from lib AceDB-3.0
+--
+-- @param  tblNameOrObject  name of variable, or table to use for the database.
+-- @return database  returns nil if the table is unknown or the database using the table doesn't exist.
+function LibFroznFunctions:GetDbFromLibAceDB(tblNameOrObject)
+	-- get lib AceDB-3.0
+	if (not LibAceDB) then
+		LibAceDB = LibStub:GetLibrary("AceDB-3.0");
+	end
+	
+	-- get table used by the database
+	local tbl;
+	
+	if (type(tblNameOrObject) == "string") then
+		-- lookup the global object for this table name
+		tbl = self:GetValueFromObjectByPath(_G, tblNameOrObject);
+	else
+		tbl = tblNameOrObject;
+	end
+	
+	if (type(tbl) ~= "table") then
+		return nil;
+	end
+	
+	-- find database object in db registry
+	for db in pairs(LibAceDB.db_registry) do
+		if (not db.parent) and (db.sv == tbl) then
+			return db;
+		end
+	end
+	
+	return nil;
+end
+
+-- get profiles from database from lib AceDB-3.0
+--
+-- @param  db  database to get profiles from
+-- @return profiles[]
+function LibFroznFunctions:GetProfilesFromDbFromLibAceDB(db, noCurrentProfile, noDefaultProfile)
+	-- build list of profiles to ignore
+	local profilesToIgnore = {};
+	
+	if (noCurrentProfile) then
+		local currentProfile = db:GetCurrentProfile();
+		
+		tinsert(profilesToIgnore, currentProfile);
+	end
+	
+	if (noDefaultProfile) then
+		tinsert(profilesToIgnore, "Default");
+	end
+	
+	-- get profiles from database from lib AceDB-3.0
+	local profiles = {};
+	
+	for _, name in ipairs(db:GetProfiles()) do
+		if (not self:ExistsInTable(name, profilesToIgnore)) then
+			tinsert(profiles, name);
+		end
+	end
+	
+	return profiles;
 end
 
 ----------------------------------------------------------------------------------------------------

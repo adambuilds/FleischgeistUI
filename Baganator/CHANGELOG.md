@@ -1,6 +1,6 @@
 # Baganator
 
-## [728](https://github.com/Baganator/Baganator/tree/728) (2025-08-13)
-[Full Changelog](https://github.com/Baganator/Baganator/compare/727...728) 
+## [731](https://github.com/Baganator/Baganator/tree/731) (2025-08-15)
+[Full Changelog](https://github.com/Baganator/Baganator/compare/730...731) 
 
-- [Fixes #536] Fix changing shown character not changing bank view  
+- Fixes to avoid script timeouts on slow devices  

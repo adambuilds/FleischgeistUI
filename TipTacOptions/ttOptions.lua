@@ -1,11 +1,13 @@
-local cfg = TipTac_Config;
+-- create addon
 local MOD_NAME = ...;
 local PARENT_MOD_NAME = "TipTac";
+local f = CreateFrame("Frame",MOD_NAME,UIParent,BackdropTemplateMixin and "BackdropTemplate");	-- 9.0.1: Using BackdropTemplate
 
 -- get libs
 local LibFroznFunctions = LibStub:GetLibrary("LibFroznFunctions-1.0");
-local LibSerialize = LibStub:GetLibrary("LibSerialize");
-local LibDeflate = LibStub:GetLibrary("LibDeflate");
+
+-- set config
+local configDb, cfg = LibFroznFunctions:CreateDbWithLibAceDB("TipTac_Config");
 
 -- constants
 local TT_OPTIONS_CATEGORY_LIST_WIDTH = 117;
@@ -62,6 +64,14 @@ local DROPDOWN_BARTEXTFORMAT = {
 	["Deficit"] = "deficit",
 };
 
+-- colors
+local TTO_COLOR = {
+	text = {
+		default = HIGHLIGHT_FONT_COLOR, -- white
+		currentProfile = LIGHTYELLOW_FONT_COLOR
+	}
+};
+
 -- Options -- The "y" value of a category subtable, will further increase the vertical offset position of the item
 --
 -- hint for layouting options:
@@ -95,6 +105,7 @@ tinsert(ttOptionsGeneral, { type = "Check", var = "showMountCollected", label = 
 tinsert(ttOptionsGeneral, { type = "Check", var = "showMountIcon", label = "Icon", tip = "This option makes the tip show the mount icon.", enabled = function(factory) return factory:GetConfigValue("showUnitTip") and factory:GetConfigValue("showMount") end, x = 210 });
 tinsert(ttOptionsGeneral, { type = "Check", var = "showMountText", label = "Name", tip = "This option makes the tip show the mount name.", enabled = function(factory) return factory:GetConfigValue("showUnitTip") and factory:GetConfigValue("showMount") end, x = 122 });
 tinsert(ttOptionsGeneral, { type = "Check", var = "showMountSpeed", label = "Speed", tip = "This option makes the tip show the mount speed.", enabled = function(factory) return factory:GetConfigValue("showUnitTip") and factory:GetConfigValue("showMount") end, x = 210 });
+tinsert(ttOptionsGeneral, { type = "Check", var = "showMountSourceIfNotCollected", label = "Source If Not Collected", tip = "This option makes the tip show the source of the mount if collected and available.", enabled = function(factory) return factory:GetConfigValue("showUnitTip") and factory:GetConfigValue("showMount") and (not factory:GetConfigValue("showMountSource")) end, x = 122 });
 tinsert(ttOptionsGeneral, { type = "Check", var = "showMountSource", label = "Source", tip = "This option makes the tip show the source of the mount if available.", enabled = function(factory) return factory:GetConfigValue("showUnitTip") and factory:GetConfigValue("showMount") end, x = 122 });
 tinsert(ttOptionsGeneral, { type = "Check", var = "showMountLore", label = "Lore", tip = "This option makes the tip show the lore of the mount if available.", enabled = function(factory) return factory:GetConfigValue("showUnitTip") and factory:GetConfigValue("showMount") end, x = 210 });
 
@@ -121,8 +132,8 @@ if (LibFroznFunctions.hasWoWFlavor.specializationAndClassTextInPlayerUnitTip) th
 	tinsert(ttOptionsGeneral, { type = "Check", var = "hideSpecializationAndClassText", label = "Hide Specialization & Class Text From Unit Tip", tip = "Strips the Specialization & Class text from the unit tooltip", enabled = function(factory) return factory:GetConfigValue("showUnitTip") end });
 end
 
-if (LibFroznFunctions.hasWoWFlavor.rightClickForFrameSettingsTextInPlayerUnitTip) then
-	tinsert(ttOptionsGeneral, { type = "Check", var = "hideRightClickForFrameSettingsText", label = "Hide Right Click for Frame Settings Text From Unit Tip", tip = "Strips the right click for frame settings text from the unit tooltip", enabled = function(factory) return factory:GetConfigValue("showUnitTip") end });
+if (LibFroznFunctions.hasWoWFlavor.rightClickForFrameSettingsTextInUnitTip) then
+	tinsert(ttOptionsGeneral, { type = "Check", var = "hideRightClickForFrameSettingsTextInUnitTip", label = "Hide \"Right Click for Frame Settings\" Text From Unit Tip", tip = "Strips the \"right click for frame settings\" text from the unit tooltip", enabled = function(factory) return factory:GetConfigValue("showUnitTip") end });
 end
 
 -- Colors
@@ -186,48 +197,88 @@ local priority = 0;
 
 if (LibFroznFunctions.hasWoWFlavor.challengeMode) then
 	priority = priority + 1;
-	tinsert(ttOptionsAnchors, { type = "Header", label = "Prio #" .. priority .. ": Anchor Overrides During Challenge Mode", tip = "Special anchor overrides during challenge mode (Mythic+)", enabled = function(factory) return factory:GetConfigValue("enableAnchor") end });
+	tinsert(ttOptionsAnchors, { type = "Header", label = "Prio #" .. priority .. ": Anchor Overrides During Challenge Mode", tip = "Special anchor overrides during challenge mode (Mythic+) in and out of combat", enabled = function(factory) return factory:GetConfigValue("enableAnchor") end });
+	
+	tinsert(ttOptionsAnchors, { type = "TextOnly", label = "In Combat" });
+	
+	tinsert(ttOptionsAnchors, { type = "Check", var = "enableAnchorOverrideWorldUnitDuringChallengeModeInCombat", label = "World Unit during challenge mode in combat", tip = "This option will override the anchor for World Unit during challenge mode (Mythic+) in combat", enabled = function(factory) return factory:GetConfigValue("enableAnchor") end, y = 10 });
+	tinsert(ttOptionsAnchors, { type = "DropDown", var = "anchorWorldUnitTypeDuringChallengeModeInCombat", label = "World Unit Type", list = DROPDOWN_ANCHORTYPE, enabled = function(factory) return factory:GetConfigValue("enableAnchor") and factory:GetConfigValue("enableAnchorOverrideWorldUnitDuringChallengeModeInCombat") end });
+	tinsert(ttOptionsAnchors, { type = "DropDown", var = "anchorWorldUnitPointDuringChallengeModeInCombat", label = "World Unit Point", list = DROPDOWN_ANCHORPOS, enabled = function(factory) return factory:GetConfigValue("enableAnchor") and factory:GetConfigValue("enableAnchorOverrideWorldUnitDuringChallengeModeInCombat") end });
+	
+	tinsert(ttOptionsAnchors, { type = "Check", var = "enableAnchorOverrideWorldTipDuringChallengeModeInCombat", label = "World Tip during challenge mode in combat", tip = "This option will override the anchor for World Tip during challenge mode (Mythic+) in combat", enabled = function(factory) return factory:GetConfigValue("enableAnchor") end, y = 10 });
+	tinsert(ttOptionsAnchors, { type = "DropDown", var = "anchorWorldTipTypeDuringChallengeModeInCombat", label = "World Tip Type", list = DROPDOWN_ANCHORTYPE, enabled = function(factory) return factory:GetConfigValue("enableAnchor") and factory:GetConfigValue("enableAnchorOverrideWorldTipDuringChallengeModeInCombat") end });
+	tinsert(ttOptionsAnchors, { type = "DropDown", var = "anchorWorldTipPointDuringChallengeModeInCombat", label = "World Tip Point", list = DROPDOWN_ANCHORPOS, enabled = function(factory) return factory:GetConfigValue("enableAnchor") and factory:GetConfigValue("enableAnchorOverrideWorldTipDuringChallengeModeInCombat") end });
+	
+	tinsert(ttOptionsAnchors, { type = "Check", var = "enableAnchorOverrideFrameUnitDuringChallengeModeInCombat", label = "Frame Unit during challenge mode in combat", tip = "This option will override the anchor for Frame Unit during challenge mode (Mythic+) in combat", enabled = function(factory) return factory:GetConfigValue("enableAnchor") end, y = 10 });
+	tinsert(ttOptionsAnchors, { type = "DropDown", var = "anchorFrameUnitTypeDuringChallengeModeInCombat", label = "Frame Unit Type", list = DROPDOWN_ANCHORTYPE, enabled = function(factory) return factory:GetConfigValue("enableAnchor") and factory:GetConfigValue("enableAnchorOverrideFrameUnitDuringChallengeModeInCombat") end });
+	tinsert(ttOptionsAnchors, { type = "DropDown", var = "anchorFrameUnitPointDuringChallengeModeInCombat", label = "Frame Unit Point", list = DROPDOWN_ANCHORPOS, enabled = function(factory) return factory:GetConfigValue("enableAnchor") and factory:GetConfigValue("enableAnchorOverrideFrameUnitDuringChallengeModeInCombat") end });
+	
+	tinsert(ttOptionsAnchors, { type = "Check", var = "enableAnchorOverrideFrameTipDuringChallengeModeInCombat", label = "Frame Tip during challenge mode in combat", tip = "This option will override the anchor for Frame Tip during challenge mode (Mythic+) in combat", enabled = function(factory) return factory:GetConfigValue("enableAnchor") end, y = 10 });
+	tinsert(ttOptionsAnchors, { type = "DropDown", var = "anchorFrameTipTypeDuringChallengeModeInCombat", label = "Frame Tip Type", list = DROPDOWN_ANCHORTYPE, enabled = function(factory) return factory:GetConfigValue("enableAnchor") and factory:GetConfigValue("enableAnchorOverrideFrameTipDuringChallengeModeInCombat") end });
+	tinsert(ttOptionsAnchors, { type = "DropDown", var = "anchorFrameTipPointDuringChallengeModeInCombat", label = "Frame Tip Point", list = DROPDOWN_ANCHORPOS, enabled = function(factory) return factory:GetConfigValue("enableAnchor") and factory:GetConfigValue("enableAnchorOverrideFrameTipDuringChallengeModeInCombat") end });
+	
+	tinsert(ttOptionsAnchors, { type = "TextOnly", label = "Out Of Combat", y = 10 });
 
-	tinsert(ttOptionsAnchors, { type = "Check", var = "enableAnchorOverrideWorldUnitDuringChallengeMode", label = "World Unit during challenge mode", tip = "This option will override the anchor for World Unit during challenge mode (Mythic+)", enabled = function(factory) return factory:GetConfigValue("enableAnchor") end });
+	tinsert(ttOptionsAnchors, { type = "Check", var = "enableAnchorOverrideWorldUnitDuringChallengeMode", label = "World Unit during challenge mode out of combat", tip = "This option will override the anchor for World Unit during challenge mode (Mythic+) out of combat", enabled = function(factory) return factory:GetConfigValue("enableAnchor") end, y = 10 });
 	tinsert(ttOptionsAnchors, { type = "DropDown", var = "anchorWorldUnitTypeDuringChallengeMode", label = "World Unit Type", list = DROPDOWN_ANCHORTYPE, enabled = function(factory) return factory:GetConfigValue("enableAnchor") and factory:GetConfigValue("enableAnchorOverrideWorldUnitDuringChallengeMode") end });
 	tinsert(ttOptionsAnchors, { type = "DropDown", var = "anchorWorldUnitPointDuringChallengeMode", label = "World Unit Point", list = DROPDOWN_ANCHORPOS, enabled = function(factory) return factory:GetConfigValue("enableAnchor") and factory:GetConfigValue("enableAnchorOverrideWorldUnitDuringChallengeMode") end });
 	
-	tinsert(ttOptionsAnchors, { type = "Check", var = "enableAnchorOverrideWorldTipDuringChallengeMode", label = "World Tip during challenge mode", tip = "This option will override the anchor for World Tip during challenge mode (Mythic+)", enabled = function(factory) return factory:GetConfigValue("enableAnchor") end, y = 10 });
+	tinsert(ttOptionsAnchors, { type = "Check", var = "enableAnchorOverrideWorldTipDuringChallengeMode", label = "World Tip during challenge mode out of combat", tip = "This option will override the anchor for World Tip during challenge mode (Mythic+) out of combat", enabled = function(factory) return factory:GetConfigValue("enableAnchor") end, y = 10 });
 	tinsert(ttOptionsAnchors, { type = "DropDown", var = "anchorWorldTipTypeDuringChallengeMode", label = "World Tip Type", list = DROPDOWN_ANCHORTYPE, enabled = function(factory) return factory:GetConfigValue("enableAnchor") and factory:GetConfigValue("enableAnchorOverrideWorldTipDuringChallengeMode") end });
 	tinsert(ttOptionsAnchors, { type = "DropDown", var = "anchorWorldTipPointDuringChallengeMode", label = "World Tip Point", list = DROPDOWN_ANCHORPOS, enabled = function(factory) return factory:GetConfigValue("enableAnchor") and factory:GetConfigValue("enableAnchorOverrideWorldTipDuringChallengeMode") end });
 	
-	tinsert(ttOptionsAnchors, { type = "Check", var = "enableAnchorOverrideFrameUnitDuringChallengeMode", label = "Frame Unit during challenge mode", tip = "This option will override the anchor for Frame Unit during challenge mode (Mythic+)", enabled = function(factory) return factory:GetConfigValue("enableAnchor") end, y = 10 });
+	tinsert(ttOptionsAnchors, { type = "Check", var = "enableAnchorOverrideFrameUnitDuringChallengeMode", label = "Frame Unit during challenge mode out of combat", tip = "This option will override the anchor for Frame Unit during challenge mode (Mythic+) out of combat", enabled = function(factory) return factory:GetConfigValue("enableAnchor") end, y = 10 });
 	tinsert(ttOptionsAnchors, { type = "DropDown", var = "anchorFrameUnitTypeDuringChallengeMode", label = "Frame Unit Type", list = DROPDOWN_ANCHORTYPE, enabled = function(factory) return factory:GetConfigValue("enableAnchor") and factory:GetConfigValue("enableAnchorOverrideFrameUnitDuringChallengeMode") end });
 	tinsert(ttOptionsAnchors, { type = "DropDown", var = "anchorFrameUnitPointDuringChallengeMode", label = "Frame Unit Point", list = DROPDOWN_ANCHORPOS, enabled = function(factory) return factory:GetConfigValue("enableAnchor") and factory:GetConfigValue("enableAnchorOverrideFrameUnitDuringChallengeMode") end });
 	
-	tinsert(ttOptionsAnchors, { type = "Check", var = "enableAnchorOverrideFrameTipDuringChallengeMode", label = "Frame Tip during challenge mode", tip = "This option will override the anchor for Frame Tip during challenge mode (Mythic+)", enabled = function(factory) return factory:GetConfigValue("enableAnchor") end, y = 10 });
+	tinsert(ttOptionsAnchors, { type = "Check", var = "enableAnchorOverrideFrameTipDuringChallengeMode", label = "Frame Tip during challenge mode out of combat", tip = "This option will override the anchor for Frame Tip during challenge mode (Mythic+) out of combat", enabled = function(factory) return factory:GetConfigValue("enableAnchor") end, y = 10 });
 	tinsert(ttOptionsAnchors, { type = "DropDown", var = "anchorFrameTipTypeDuringChallengeMode", label = "Frame Tip Type", list = DROPDOWN_ANCHORTYPE, enabled = function(factory) return factory:GetConfigValue("enableAnchor") and factory:GetConfigValue("enableAnchorOverrideFrameTipDuringChallengeMode") end });
 	tinsert(ttOptionsAnchors, { type = "DropDown", var = "anchorFrameTipPointDuringChallengeMode", label = "Frame Tip Point", list = DROPDOWN_ANCHORPOS, enabled = function(factory) return factory:GetConfigValue("enableAnchor") and factory:GetConfigValue("enableAnchorOverrideFrameTipDuringChallengeMode") end });
 end
 
 priority = priority + 1;
-tinsert(ttOptionsAnchors, { type = "Header", label = "Prio #" .. priority .. ": Anchor Overrides During Instance", tip = "Special anchor overrides during an instance (Dungeon, Raid, PvP, Arena, Scenario)", enabled = function(factory) return factory:GetConfigValue("enableAnchor") end });
+tinsert(ttOptionsAnchors, { type = "Header", label = "Prio #" .. priority .. ": Anchor Overrides During An Instance", tip = "Special anchor overrides during an instance (Dungeon, Raid, PvP, Arena, Scenario) in and out of combat", enabled = function(factory) return factory:GetConfigValue("enableAnchor") end });
 
-tinsert(ttOptionsAnchors, { type = "Check", var = "enableAnchorOverrideWorldUnitDuringInstance", label = "World Unit during an instance", tip = "This option will override the anchor for World Unit during an instance (Dungeon, Raid, PvP, Arena, Scenario)", enabled = function(factory) return factory:GetConfigValue("enableAnchor") end });
+tinsert(ttOptionsAnchors, { type = "TextOnly", label = "In Combat" });
+
+tinsert(ttOptionsAnchors, { type = "Check", var = "enableAnchorOverrideWorldUnitDuringInstanceInCombat", label = "World Unit during an instance in combat", tip = "This option will override the anchor for World Unit during an instance (Dungeon, Raid, PvP, Arena, Scenario) in combat", enabled = function(factory) return factory:GetConfigValue("enableAnchor") end, y = 10 });
+tinsert(ttOptionsAnchors, { type = "DropDown", var = "anchorWorldUnitTypeDuringInstanceInCombat", label = "World Unit Type", list = DROPDOWN_ANCHORTYPE, enabled = function(factory) return factory:GetConfigValue("enableAnchor") and factory:GetConfigValue("enableAnchorOverrideWorldUnitDuringInstanceInCombat") end });
+tinsert(ttOptionsAnchors, { type = "DropDown", var = "anchorWorldUnitPointDuringInstanceInCombat", label = "World Unit Point", list = DROPDOWN_ANCHORPOS, enabled = function(factory) return factory:GetConfigValue("enableAnchor") and factory:GetConfigValue("enableAnchorOverrideWorldUnitDuringInstanceInCombat") end });
+
+tinsert(ttOptionsAnchors, { type = "Check", var = "enableAnchorOverrideWorldTipDuringInstanceInCombat", label = "World Tip during an instance in combat", tip = "This option will override the anchor for World Tip during an instance (Dungeon, Raid, PvP, Arena, Scenario) in combat", enabled = function(factory) return factory:GetConfigValue("enableAnchor") end, y = 10 });
+tinsert(ttOptionsAnchors, { type = "DropDown", var = "anchorWorldTipTypeDuringInstanceInCombat", label = "World Tip Type", list = DROPDOWN_ANCHORTYPE, enabled = function(factory) return factory:GetConfigValue("enableAnchor") and factory:GetConfigValue("enableAnchorOverrideWorldTipDuringInstanceInCombat") end });
+tinsert(ttOptionsAnchors, { type = "DropDown", var = "anchorWorldTipPointDuringInstanceInCombat", label = "World Tip Point", list = DROPDOWN_ANCHORPOS, enabled = function(factory) return factory:GetConfigValue("enableAnchor") and factory:GetConfigValue("enableAnchorOverrideWorldTipDuringInstanceInCombat") end });
+
+tinsert(ttOptionsAnchors, { type = "Check", var = "enableAnchorOverrideFrameUnitDuringInstanceInCombat", label = "Frame Unit during an instance in combat", tip = "This option will override the anchor for Frame Unit during an instance (Dungeon, Raid, PvP, Arena, Scenario) in combat", enabled = function(factory) return factory:GetConfigValue("enableAnchor") end, y = 10 });
+tinsert(ttOptionsAnchors, { type = "DropDown", var = "anchorFrameUnitTypeDuringInstanceInCombat", label = "Frame Unit Type", list = DROPDOWN_ANCHORTYPE, enabled = function(factory) return factory:GetConfigValue("enableAnchor") and factory:GetConfigValue("enableAnchorOverrideFrameUnitDuringInstanceInCombat") end });
+tinsert(ttOptionsAnchors, { type = "DropDown", var = "anchorFrameUnitPointDuringInstanceInCombat", label = "Frame Unit Point", list = DROPDOWN_ANCHORPOS, enabled = function(factory) return factory:GetConfigValue("enableAnchor") and factory:GetConfigValue("enableAnchorOverrideFrameUnitDuringInstanceInCombat") end });
+
+tinsert(ttOptionsAnchors, { type = "Check", var = "enableAnchorOverrideFrameTipDuringInstanceInCombat", label = "Frame Tip during an instance in combat", tip = "This option will override the anchor for Frame Tip during an instance (Dungeon, Raid, PvP, Arena, Scenario) in combat", enabled = function(factory) return factory:GetConfigValue("enableAnchor") end, y = 10 });
+tinsert(ttOptionsAnchors, { type = "DropDown", var = "anchorFrameTipTypeDuringInstanceInCombat", label = "Frame Tip Type", list = DROPDOWN_ANCHORTYPE, enabled = function(factory) return factory:GetConfigValue("enableAnchor") and factory:GetConfigValue("enableAnchorOverrideFrameTipDuringInstanceInCombat") end });
+tinsert(ttOptionsAnchors, { type = "DropDown", var = "anchorFrameTipPointDuringInstanceInCombat", label = "Frame Tip Point", list = DROPDOWN_ANCHORPOS, enabled = function(factory) return factory:GetConfigValue("enableAnchor") and factory:GetConfigValue("enableAnchorOverrideFrameTipDuringInstanceInCombat") end });
+
+tinsert(ttOptionsAnchors, { type = "TextOnly", label = "Out Of Combat", y = 10 });
+
+tinsert(ttOptionsAnchors, { type = "Check", var = "enableAnchorOverrideWorldUnitDuringInstance", label = "World Unit during an instance out of combat", tip = "This option will override the anchor for World Unit during an instance (Dungeon, Raid, PvP, Arena, Scenario) out of combat", enabled = function(factory) return factory:GetConfigValue("enableAnchor") end, y = 10 });
 tinsert(ttOptionsAnchors, { type = "DropDown", var = "anchorWorldUnitTypeDuringInstance", label = "World Unit Type", list = DROPDOWN_ANCHORTYPE, enabled = function(factory) return factory:GetConfigValue("enableAnchor") and factory:GetConfigValue("enableAnchorOverrideWorldUnitDuringInstance") end });
 tinsert(ttOptionsAnchors, { type = "DropDown", var = "anchorWorldUnitPointDuringInstance", label = "World Unit Point", list = DROPDOWN_ANCHORPOS, enabled = function(factory) return factory:GetConfigValue("enableAnchor") and factory:GetConfigValue("enableAnchorOverrideWorldUnitDuringInstance") end });
 
-tinsert(ttOptionsAnchors, { type = "Check", var = "enableAnchorOverrideWorldTipDuringInstance", label = "World Tip during an instance", tip = "This option will override the anchor for World Tip during an instance (Dungeon, Raid, PvP, Arena, Scenario)", enabled = function(factory) return factory:GetConfigValue("enableAnchor") end, y = 10 });
+tinsert(ttOptionsAnchors, { type = "Check", var = "enableAnchorOverrideWorldTipDuringInstance", label = "World Tip during an instance out of combat", tip = "This option will override the anchor for World Tip during an instance (Dungeon, Raid, PvP, Arena, Scenario) out of combat", enabled = function(factory) return factory:GetConfigValue("enableAnchor") end, y = 10 });
 tinsert(ttOptionsAnchors, { type = "DropDown", var = "anchorWorldTipTypeDuringInstance", label = "World Tip Type", list = DROPDOWN_ANCHORTYPE, enabled = function(factory) return factory:GetConfigValue("enableAnchor") and factory:GetConfigValue("enableAnchorOverrideWorldTipDuringInstance") end });
 tinsert(ttOptionsAnchors, { type = "DropDown", var = "anchorWorldTipPointDuringInstance", label = "World Tip Point", list = DROPDOWN_ANCHORPOS, enabled = function(factory) return factory:GetConfigValue("enableAnchor") and factory:GetConfigValue("enableAnchorOverrideWorldTipDuringInstance") end });
 
-tinsert(ttOptionsAnchors, { type = "Check", var = "enableAnchorOverrideFrameUnitDuringInstance", label = "Frame Unit during an instance", tip = "This option will override the anchor for Frame Unit during an instance (Dungeon, Raid, PvP, Arena, Scenario)", enabled = function(factory) return factory:GetConfigValue("enableAnchor") end, y = 10 });
+tinsert(ttOptionsAnchors, { type = "Check", var = "enableAnchorOverrideFrameUnitDuringInstance", label = "Frame Unit during an instance out of combat", tip = "This option will override the anchor for Frame Unit during an instance (Dungeon, Raid, PvP, Arena, Scenario) out of combat", enabled = function(factory) return factory:GetConfigValue("enableAnchor") end, y = 10 });
 tinsert(ttOptionsAnchors, { type = "DropDown", var = "anchorFrameUnitTypeDuringInstance", label = "Frame Unit Type", list = DROPDOWN_ANCHORTYPE, enabled = function(factory) return factory:GetConfigValue("enableAnchor") and factory:GetConfigValue("enableAnchorOverrideFrameUnitDuringInstance") end });
 tinsert(ttOptionsAnchors, { type = "DropDown", var = "anchorFrameUnitPointDuringInstance", label = "Frame Unit Point", list = DROPDOWN_ANCHORPOS, enabled = function(factory) return factory:GetConfigValue("enableAnchor") and factory:GetConfigValue("enableAnchorOverrideFrameUnitDuringInstance") end });
 
-tinsert(ttOptionsAnchors, { type = "Check", var = "enableAnchorOverrideFrameTipDuringInstance", label = "Frame Tip during an instance", tip = "This option will override the anchor for Frame Tip during an instance (Dungeon, Raid, PvP, Arena, Scenario)", enabled = function(factory) return factory:GetConfigValue("enableAnchor") end, y = 10 });
+tinsert(ttOptionsAnchors, { type = "Check", var = "enableAnchorOverrideFrameTipDuringInstance", label = "Frame Tip during an instance out of combat", tip = "This option will override the anchor for Frame Tip during an instance (Dungeon, Raid, PvP, Arena, Scenario) out of combat", enabled = function(factory) return factory:GetConfigValue("enableAnchor") end, y = 10 });
 tinsert(ttOptionsAnchors, { type = "DropDown", var = "anchorFrameTipTypeDuringInstance", label = "Frame Tip Type", list = DROPDOWN_ANCHORTYPE, enabled = function(factory) return factory:GetConfigValue("enableAnchor") and factory:GetConfigValue("enableAnchorOverrideFrameTipDuringInstance") end });
 tinsert(ttOptionsAnchors, { type = "DropDown", var = "anchorFrameTipPointDuringInstance", label = "Frame Tip Point", list = DROPDOWN_ANCHORPOS, enabled = function(factory) return factory:GetConfigValue("enableAnchor") and factory:GetConfigValue("enableAnchorOverrideFrameTipDuringInstance") end });
 
 if (LibFroznFunctions.hasWoWFlavor.skyriding) then
 	priority = priority + 1;
 	tinsert(ttOptionsAnchors, { type = "Header", label = "Prio #" .. priority .. ": Anchor Overrides During Skyriding", tip = "Special anchor overrides during skyriding", enabled = function(factory) return factory:GetConfigValue("enableAnchor") end });
-
+	
 	tinsert(ttOptionsAnchors, { type = "Check", var = "enableAnchorOverrideWorldUnitDuringSkyriding", label = "World Unit during skyriding", tip = "This option will override the anchor for World Unit during skyriding", enabled = function(factory) return factory:GetConfigValue("enableAnchor") end });
 	tinsert(ttOptionsAnchors, { type = "DropDown", var = "anchorWorldUnitTypeDuringSkyriding", label = "World Unit Type", list = DROPDOWN_ANCHORTYPE, enabled = function(factory) return factory:GetConfigValue("enableAnchor") and factory:GetConfigValue("enableAnchorOverrideWorldUnitDuringSkyriding") end });
 	tinsert(ttOptionsAnchors, { type = "DropDown", var = "anchorWorldUnitPointDuringSkyriding", label = "World Unit Point", list = DROPDOWN_ANCHORPOS, enabled = function(factory) return factory:GetConfigValue("enableAnchor") and factory:GetConfigValue("enableAnchorOverrideWorldUnitDuringSkyriding") end });
@@ -283,31 +334,61 @@ if (LibFroznFunctions.hasWoWFlavor.challengeMode) then
 	priority = priority + 1;
 	tinsert(ttOptionsHiding, { type = "Header", label = "Prio #" .. priority .. ": Hide Tips During Challenge Mode" });
 	
-	tinsert(ttOptionsHiding, { type = "Check", var = "hideTipsDuringChallengeModeWorldUnits", label = "Hide World Units", tip = "When you have this option checked, World Units will be hidden during challenge mode (Mythic+)." });
-	tinsert(ttOptionsHiding, { type = "Check", var = "hideTipsDuringChallengeModeFrameUnits", label = "Hide Frame Units", tip = "When you have this option checked, Frame Units will be hidden during challenge mode (Mythic+).", x = 160 });
-	tinsert(ttOptionsHiding, { type = "Check", var = "hideTipsDuringChallengeModeWorldTips", label = "Hide World Tips", tip = "When you have this option checked, World Tips will be hidden during challenge mode (Mythic+)." });
-	tinsert(ttOptionsHiding, { type = "Check", var = "hideTipsDuringChallengeModeFrameTips", label = "Hide Frame Tips", tip = "When you have this option checked, Frame Tips will be hidden during challenge mode (Mythic+).", x = 160 });
+	tinsert(ttOptionsHiding, { type = "TextOnly", label = "In Combat" });
 	
-	tinsert(ttOptionsHiding, { type = "Check", var = "hideTipsDuringChallengeModeUnitTips", label = "Hide Unit Tips", tip = "When you have this option checked, Unit Tips will be hidden during challenge mode (Mythic+).", y = 10 });
-	tinsert(ttOptionsHiding, { type = "Check", var = "hideTipsDuringChallengeModeSpellTips", label = "Hide Spell Tips", tip = "When you have this option checked, Spell Tips will be hidden during challenge mode (Mythic+).", x = 160 });
-	tinsert(ttOptionsHiding, { type = "Check", var = "hideTipsDuringChallengeModeItemTips", label = "Hide Item Tips", tip = "When you have this option checked, Item Tips will be hidden during challenge mode (Mythic+)." });
-	tinsert(ttOptionsHiding, { type = "Check", var = "hideTipsDuringChallengeModeActionTips", label = "Hide Action Bar Tips", tip = "When you have this option checked, Action Bar Tips will be hidden during challenge mode (Mythic+)." });
-	tinsert(ttOptionsHiding, { type = "Check", var = "hideTipsDuringChallengeModeExpBarTips", label = "Hide Exp Bar Tips", tip = "When you have this option checked, Experience Bar Tips will be hidden during challenge mode (Mythic+).", x = 160 });
+	tinsert(ttOptionsHiding, { type = "Check", var = "hideTipsDuringChallengeModeInCombatWorldUnits", label = "Hide World Units", tip = "When you have this option checked, World Units will be hidden during challenge mode (Mythic+) in combat.", y = 10 });
+	tinsert(ttOptionsHiding, { type = "Check", var = "hideTipsDuringChallengeModeInCombatFrameUnits", label = "Hide Frame Units", tip = "When you have this option checked, Frame Units will be hidden during challenge mode (Mythic+) in combat.", x = 160 });
+	tinsert(ttOptionsHiding, { type = "Check", var = "hideTipsDuringChallengeModeInCombatWorldTips", label = "Hide World Tips", tip = "When you have this option checked, World Tips will be hidden during challenge mode (Mythic+) in combat." });
+	tinsert(ttOptionsHiding, { type = "Check", var = "hideTipsDuringChallengeModeInCombatFrameTips", label = "Hide Frame Tips", tip = "When you have this option checked, Frame Tips will be hidden during challenge mode (Mythic+) in combat.", x = 160 });
+	
+	tinsert(ttOptionsHiding, { type = "Check", var = "hideTipsDuringChallengeModeInCombatUnitTips", label = "Hide Unit Tips", tip = "When you have this option checked, Unit Tips will be hidden during challenge mode (Mythic+) in combat.", y = 10 });
+	tinsert(ttOptionsHiding, { type = "Check", var = "hideTipsDuringChallengeModeInCombatSpellTips", label = "Hide Spell Tips", tip = "When you have this option checked, Spell Tips will be hidden during challenge mode (Mythic+) in combat.", x = 160 });
+	tinsert(ttOptionsHiding, { type = "Check", var = "hideTipsDuringChallengeModeInCombatItemTips", label = "Hide Item Tips", tip = "When you have this option checked, Item Tips will be hidden during challenge mode (Mythic+) in combat." });
+	tinsert(ttOptionsHiding, { type = "Check", var = "hideTipsDuringChallengeModeInCombatActionTips", label = "Hide Action Bar Tips", tip = "When you have this option checked, Action Bar Tips will be hidden during challenge mode (Mythic+) in combat." });
+	tinsert(ttOptionsHiding, { type = "Check", var = "hideTipsDuringChallengeModeInCombatExpBarTips", label = "Hide Exp Bar Tips", tip = "When you have this option checked, Experience Bar Tips will be hidden during challenge mode (Mythic+) in combat.", x = 160 });
+	
+	tinsert(ttOptionsHiding, { type = "TextOnly", label = "Out Of Combat", y = 10 });
+	
+	tinsert(ttOptionsHiding, { type = "Check", var = "hideTipsDuringChallengeModeWorldUnits", label = "Hide World Units", tip = "When you have this option checked, World Units will be hidden during challenge mode (Mythic+) out of combat.", y = 10 });
+	tinsert(ttOptionsHiding, { type = "Check", var = "hideTipsDuringChallengeModeFrameUnits", label = "Hide Frame Units", tip = "When you have this option checked, Frame Units will be hidden during challenge mode (Mythic+) out of combat.", x = 160 });
+	tinsert(ttOptionsHiding, { type = "Check", var = "hideTipsDuringChallengeModeWorldTips", label = "Hide World Tips", tip = "When you have this option checked, World Tips will be hidden during challenge mode (Mythic+) out of combat." });
+	tinsert(ttOptionsHiding, { type = "Check", var = "hideTipsDuringChallengeModeFrameTips", label = "Hide Frame Tips", tip = "When you have this option checked, Frame Tips will be hidden during challenge mode (Mythic+) out of combat.", x = 160 });
+	
+	tinsert(ttOptionsHiding, { type = "Check", var = "hideTipsDuringChallengeModeUnitTips", label = "Hide Unit Tips", tip = "When you have this option checked, Unit Tips will be hidden during challenge mode (Mythic+) out of combat.", y = 10 });
+	tinsert(ttOptionsHiding, { type = "Check", var = "hideTipsDuringChallengeModeSpellTips", label = "Hide Spell Tips", tip = "When you have this option checked, Spell Tips will be hidden during challenge mode (Mythic+) out of combat.", x = 160 });
+	tinsert(ttOptionsHiding, { type = "Check", var = "hideTipsDuringChallengeModeItemTips", label = "Hide Item Tips", tip = "When you have this option checked, Item Tips will be hidden during challenge mode (Mythic+) out of combat." });
+	tinsert(ttOptionsHiding, { type = "Check", var = "hideTipsDuringChallengeModeActionTips", label = "Hide Action Bar Tips", tip = "When you have this option checked, Action Bar Tips will be hidden during challenge mode (Mythic+) out of combat." });
+	tinsert(ttOptionsHiding, { type = "Check", var = "hideTipsDuringChallengeModeExpBarTips", label = "Hide Exp Bar Tips", tip = "When you have this option checked, Experience Bar Tips will be hidden during challenge mode (Mythic+) out of combat.", x = 160 });
 end
 
 priority = priority + 1;
-tinsert(ttOptionsHiding, { type = "Header", label = "Prio #" .. priority .. ": Hide Tips During Instance" });
+tinsert(ttOptionsHiding, { type = "Header", label = "Prio #" .. priority .. ": Hide Tips During An Instance" });
 
-tinsert(ttOptionsHiding, { type = "Check", var = "hideTipsDuringInstanceWorldUnits", label = "Hide World Units", tip = "When you have this option checked, World Units will be hidden during an instance (Dungeon, Raid, PvP, Arena, Scenario)." });
-tinsert(ttOptionsHiding, { type = "Check", var = "hideTipsDuringInstanceFrameUnits", label = "Hide Frame Units", tip = "When you have this option checked, Frame Units will be hidden during an instance (Dungeon, Raid, PvP, Arena, Scenario).", x = 160 });
-tinsert(ttOptionsHiding, { type = "Check", var = "hideTipsDuringInstanceWorldTips", label = "Hide World Tips", tip = "When you have this option checked, World Tips will be hidden during an instance (Dungeon, Raid, PvP, Arena, Scenario)." });
-tinsert(ttOptionsHiding, { type = "Check", var = "hideTipsDuringInstanceFrameTips", label = "Hide Frame Tips", tip = "When you have this option checked, Frame Tips will be hidden during an instance (Dungeon, Raid, PvP, Arena, Scenario).", x = 160 });
+tinsert(ttOptionsHiding, { type = "TextOnly", label = "In Combat" });
 
-tinsert(ttOptionsHiding, { type = "Check", var = "hideTipsDuringInstanceUnitTips", label = "Hide Unit Tips", tip = "When you have this option checked, Unit Tips will be hidden during an instance (Dungeon, Raid, PvP, Arena, Scenario).", y = 10 });
-tinsert(ttOptionsHiding, { type = "Check", var = "hideTipsDuringInstanceSpellTips", label = "Hide Spell Tips", tip = "When you have this option checked, Spell Tips will be hidden during an instance (Dungeon, Raid, PvP, Arena, Scenario).", x = 160 });
-tinsert(ttOptionsHiding, { type = "Check", var = "hideTipsDuringInstanceItemTips", label = "Hide Item Tips", tip = "When you have this option checked, Item Tips will be hidden during an instance (Dungeon, Raid, PvP, Arena, Scenario)." });
-tinsert(ttOptionsHiding, { type = "Check", var = "hideTipsDuringInstanceActionTips", label = "Hide Action Bar Tips", tip = "When you have this option checked, Action Bar Tips will be hidden during an instance (Dungeon, Raid, PvP, Arena, Scenario)." });
-tinsert(ttOptionsHiding, { type = "Check", var = "hideTipsDuringInstanceExpBarTips", label = "Hide Exp Bar Tips", tip = "When you have this option checked, Experience Bar Tips will be hidden during an instance (Dungeon, Raid, PvP, Arena, Scenario).", x = 160 });
+tinsert(ttOptionsHiding, { type = "Check", var = "hideTipsDuringInstanceInCombatWorldUnits", label = "Hide World Units", tip = "When you have this option checked, World Units will be hidden during an instance (Dungeon, Raid, PvP, Arena, Scenario) in combat.", y = 10 });
+tinsert(ttOptionsHiding, { type = "Check", var = "hideTipsDuringInstanceInCombatFrameUnits", label = "Hide Frame Units", tip = "When you have this option checked, Frame Units will be hidden during an instance (Dungeon, Raid, PvP, Arena, Scenario) in combat.", x = 160 });
+tinsert(ttOptionsHiding, { type = "Check", var = "hideTipsDuringInstanceInCombatWorldTips", label = "Hide World Tips", tip = "When you have this option checked, World Tips will be hidden during an instance (Dungeon, Raid, PvP, Arena, Scenario) in combat." });
+tinsert(ttOptionsHiding, { type = "Check", var = "hideTipsDuringInstanceInCombatFrameTips", label = "Hide Frame Tips", tip = "When you have this option checked, Frame Tips will be hidden during an instance (Dungeon, Raid, PvP, Arena, Scenario) in combat.", x = 160 });
+
+tinsert(ttOptionsHiding, { type = "Check", var = "hideTipsDuringInstanceInCombatUnitTips", label = "Hide Unit Tips", tip = "When you have this option checked, Unit Tips will be hidden during an instance (Dungeon, Raid, PvP, Arena, Scenario) in combat.", y = 10 });
+tinsert(ttOptionsHiding, { type = "Check", var = "hideTipsDuringInstanceInCombatSpellTips", label = "Hide Spell Tips", tip = "When you have this option checked, Spell Tips will be hidden during an instance (Dungeon, Raid, PvP, Arena, Scenario) in combat.", x = 160 });
+tinsert(ttOptionsHiding, { type = "Check", var = "hideTipsDuringInstanceInCombatItemTips", label = "Hide Item Tips", tip = "When you have this option checked, Item Tips will be hidden during an instance (Dungeon, Raid, PvP, Arena, Scenario) in combat." });
+tinsert(ttOptionsHiding, { type = "Check", var = "hideTipsDuringInstanceInCombatActionTips", label = "Hide Action Bar Tips", tip = "When you have this option checked, Action Bar Tips will be hidden during an instance (Dungeon, Raid, PvP, Arena, Scenario) in combat." });
+tinsert(ttOptionsHiding, { type = "Check", var = "hideTipsDuringInstanceInCombatExpBarTips", label = "Hide Exp Bar Tips", tip = "When you have this option checked, Experience Bar Tips will be hidden during an instance (Dungeon, Raid, PvP, Arena, Scenario) in combat.", x = 160 });
+
+tinsert(ttOptionsHiding, { type = "TextOnly", label = "Out Of Combat", y = 10 });
+
+tinsert(ttOptionsHiding, { type = "Check", var = "hideTipsDuringInstanceWorldUnits", label = "Hide World Units", tip = "When you have this option checked, World Units will be hidden during an instance (Dungeon, Raid, PvP, Arena, Scenario) out of combat.", y = 10 });
+tinsert(ttOptionsHiding, { type = "Check", var = "hideTipsDuringInstanceFrameUnits", label = "Hide Frame Units", tip = "When you have this option checked, Frame Units will be hidden during an instance (Dungeon, Raid, PvP, Arena, Scenario) out of combat.", x = 160 });
+tinsert(ttOptionsHiding, { type = "Check", var = "hideTipsDuringInstanceWorldTips", label = "Hide World Tips", tip = "When you have this option checked, World Tips will be hidden during an instance (Dungeon, Raid, PvP, Arena, Scenario) out of combat." });
+tinsert(ttOptionsHiding, { type = "Check", var = "hideTipsDuringInstanceFrameTips", label = "Hide Frame Tips", tip = "When you have this option checked, Frame Tips will be hidden during an instance (Dungeon, Raid, PvP, Arena, Scenario) out of combat.", x = 160 });
+
+tinsert(ttOptionsHiding, { type = "Check", var = "hideTipsDuringInstanceUnitTips", label = "Hide Unit Tips", tip = "When you have this option checked, Unit Tips will be hidden during an instance (Dungeon, Raid, PvP, Arena, Scenario) out of combat.", y = 10 });
+tinsert(ttOptionsHiding, { type = "Check", var = "hideTipsDuringInstanceSpellTips", label = "Hide Spell Tips", tip = "When you have this option checked, Spell Tips will be hidden during an instance (Dungeon, Raid, PvP, Arena, Scenario) out of combat.", x = 160 });
+tinsert(ttOptionsHiding, { type = "Check", var = "hideTipsDuringInstanceItemTips", label = "Hide Item Tips", tip = "When you have this option checked, Item Tips will be hidden during an instance (Dungeon, Raid, PvP, Arena, Scenario) out of combat." });
+tinsert(ttOptionsHiding, { type = "Check", var = "hideTipsDuringInstanceActionTips", label = "Hide Action Bar Tips", tip = "When you have this option checked, Action Bar Tips will be hidden during an instance (Dungeon, Raid, PvP, Arena, Scenario) out of combat." });
+tinsert(ttOptionsHiding, { type = "Check", var = "hideTipsDuringInstanceExpBarTips", label = "Hide Exp Bar Tips", tip = "When you have this option checked, Experience Bar Tips will be hidden during an instance (Dungeon, Raid, PvP, Arena, Scenario) out of combat.", x = 160 });
 
 if (LibFroznFunctions.hasWoWFlavor.skyriding) then
 	priority = priority + 1;
@@ -583,15 +664,6 @@ local options = {
 	{
 		category = "Hyperlink",
 		enabled = { type = "Check", var = "enableChatHoverTips", label = "Enable (Guild & Community) ChatFrame Hover Hyperlinks", tip = "When hovering the mouse over a link in the (Guild & Community) Chatframe, show the tooltip without having to click on it" }
- 	},
-	-- Layouts
-	{
-		category = "Layouts",
-		options = {
-			{ type = "DropDown", label = "Layout Template", init = TipTacLayouts.LoadLayout_Init },
---			{ type = "Text", label = "Save Layout", func = nil },
---			{ type = "DropDown", label = "Delete Layout", init = TipTacLayouts.DeleteLayout_Init },
-		}
 	},
 };
 
@@ -743,6 +815,12 @@ if (TipTacItemRef) then
 	tinsert(ttifOptions, { type = "Slider", var = "if_iconOffsetX", label = "Icon X Offset", min = -200, max = 200, step = 0.5, enabled = function(factory) return factory:GetConfigValue("if_enable") and factory:GetConfigValue("if_showIcon") end });
 	tinsert(ttifOptions, { type = "Slider", var = "if_iconOffsetY", label = "Icon Y Offset", min = -200, max = 200, step = 0.5, enabled = function(factory) return factory:GetConfigValue("if_enable") and factory:GetConfigValue("if_showIcon") end });
 	
+	if (LibFroznFunctions.hasWoWFlavor.clickForSettingsTextInCurrencyTip) then
+		tinsert(ttifOptions, { type = "Header", label = "Strip default text from tooltip", enabled = function(factory) return factory:GetConfigValue("if_enable") end });
+		
+		tinsert(ttifOptions, { type = "Check", var = "if_hideClickForSettingsTextInCurrencyTip", label = "Hide \"Click for Settings\" Text From Currency Tip", tip = "Strips the \"click for settings\" text from the currency tooltip", enabled = function(factory) return factory:GetConfigValue("if_enable") end });
+	end
+	
 	tinsert(options, {
 		category = "ItemRef",
 		enabled = { type = "Check", var = "if_enable", tip = "Turns on or off all features of the TipTacItemRef addon" },
@@ -750,11 +828,40 @@ if (TipTacItemRef) then
 	});
 end
 
+-- Layouts
+tinsert(options, {
+	category = "Layouts",
+	btnResetDisabled = true,
+	options = {
+		{ type = "Header", label = "Available Profiles" },
+		
+		{ type = "TextOnly", var = "func_currentProfile", get = function() return "Current Profile: " .. TTO_COLOR.text.currentProfile:WrapTextInColorCode(configDb:GetCurrentProfile()); end, set = function() end },
+		
+		{ type = "DropDown", label = "Switch to Profile", init = TipTacLayouts.SwitchProfile_Init, enabled = function(factory) return #LibFroznFunctions:GetProfilesFromDbFromLibAceDB(configDb, true) >= 1 end },
+		
+		{ type = "Header", label = "Change Current Profile" },
+		
+		{ type = "DropDown", label = "Copy Settings from\nother Profile", init = TipTacLayouts.CopyProfile_Init, enabled = function(factory) return #LibFroznFunctions:GetProfilesFromDbFromLibAceDB(configDb, true) >= 1 end },
+		
+		{ type = "DropDown", label = "Load Predefined\nLayout Template", init = TipTacLayouts.LoadLayout_Init },
+--		{ type = "Text", label = "Save Layout", func = nil },
+--		{ type = "DropDown", label = "Delete Layout", init = TipTacLayouts.DeleteLayout_Init },
+		
+		{ type = "Button", label = "Export Settings", width = 140, click = TipTacLayouts.ExportSettings_SelectValue, y = 10 },
+		{ type = "Button", label = "Import Settings", width = 140, click = TipTacLayouts.ImportSettings_SelectValue, x = 163 },
+		
+		{ type = "Button", label = "Reset Current Profile to Default Settings", width = 303, click = TipTacLayouts.ResetProfile_SelectValue, y = 10 },
+		
+		{ type = "Header", label = "Manage Profiles" },
+		
+		{ type = "Text", var = "func_createNewProfile", get = function() return ""; end, set = TipTacLayouts.CreateProfile_SelectValue, label = "Create New Profile\nwith Default Settings" },
+		{ type = "DropDown", label = "Delete Profile", init = TipTacLayouts.DeleteProfile_Init, tip = "The \"Default\" profile can't be deleted.", enabled = function(factory) return #LibFroznFunctions:GetProfilesFromDbFromLibAceDB(configDb, true, true) >= 1 end },
+	}
+});
+
 --------------------------------------------------------------------------------------------------------
 --                                          Initialize Frame                                          --
 --------------------------------------------------------------------------------------------------------
-
-local f = CreateFrame("Frame",MOD_NAME,UIParent,BackdropTemplateMixin and "BackdropTemplate");	-- 9.0.1: Using BackdropTemplate
 
 tinsert(UISpecialFrames, f:GetName()); -- hopefully no taint
 
@@ -843,120 +950,19 @@ local function Reset_OnLeave(self)
 	GameTooltip:Hide();
 end
 
-f.btnMisc = CreateFrame("Button",nil,f,"UIPanelButtonTemplate");
-f.btnMisc:SetSize(75,24);
-f.btnMisc:SetPoint("LEFT",f.btnAnchor,"RIGHT",9,0);
-f.btnMisc:SetScript("OnClick",Reset_OnClick);
-f.btnMisc:SetScript("OnEnter", Reset_OnEnter);
-f.btnMisc:SetScript("OnLeave", Reset_OnLeave);
-f.btnMisc:SetText("Defaults");
+f.btnReset = CreateFrame("Button",nil,f,"UIPanelButtonTemplate");
+f.btnReset:SetSize(75,24);
+f.btnReset:SetPoint("LEFT",f.btnAnchor,"RIGHT",9,0);
+f.btnReset:SetScript("OnClick",Reset_OnClick);
+f.btnReset:SetScript("OnEnter", Reset_OnEnter);
+f.btnReset:SetScript("OnLeave", Reset_OnLeave);
+f.btnReset:SetText("Defaults");
 
 local function Misc_OnClick(self)
-	ToggleDropDownMenu(1, nil, f.btnReport.dropDownMenu, f.btnReport, 0, 0);
+	ToggleDropDownMenu(1, nil, f.btnMisc.dropDownMenu, f.btnMisc, 0, 0);
 end
 
 local function Misc_SettingsDropDownOnClick(dropDownMenuButton, arg1, arg2)
-	if (arg1 == "settingsImport") then
-		-- open popup to get import string with new config
-		LibFroznFunctions:ShowPopupWithText({
-			prompt = "Paste export string with new config:",
-			iconFile = "Interface\\AddOns\\" .. PARENT_MOD_NAME .. "\\media\\Talents",
-			iconTexCoord = { 0.924316, 0.944824, 0.0380859, 0.0771484 },
-			acceptButtonText = "Import",
-			cancelButtonText = "Cancel",
-			onShowHandler = function(self, data)
-				-- fix icon position
-				local alertIcon = (self.AlertIcon or _G[self:GetName() .. "AlertIcon"]);
-				
-				if (not alertIcon) then
-					return;
-				end
-				
-				alertIcon:ClearAllPoints();
-				
-				if (self.Resize) then -- GameDialogMixin:Resize() available since tww 11.2.0
-					alertIcon:SetPoint("LEFT", 24, 7);
-				else
-					alertIcon:SetPoint("LEFT", 24, 4);
-				end
-			end,
-			onAcceptHandler = function(self, data)
-				-- import export string with new config
-				local editBox = (self.GetEditBox and self:GetEditBox() or self.editBox); -- acccessor method GetEditBox() available since tww 11.2.0
-				local encodedConfig = editBox:GetText();
-				local compressedConfig = LibDeflate:DecodeForPrint(encodedConfig);
-				
-				local function addFailedMessageToChatFrame()
-					TipTac:AddMessageToChatFrame("{caption:" .. PARENT_MOD_NAME .. "}: {error:Couldn't import new config. Export string may be corrupt.}");
-				end
-				
-				if (not compressedConfig) then
-					addFailedMessageToChatFrame();
-					return;
-				end
-				
-				local serializedConfig = LibDeflate:DecompressDeflate(compressedConfig);
-				
-				if (not serializedConfig) then
-					addFailedMessageToChatFrame();
-					return;
-				end
-				
-				local success, newCfg = LibSerialize:Deserialize(serializedConfig);
-				
-				if (not success) or (type(newCfg) ~= "table") then
-					addFailedMessageToChatFrame();
-					return;
-				end
-				
-				-- apply new config
-				LibFroznFunctions:MixinWholeObjects(cfg, newCfg);
-				
-				-- inform group that the config has been loaded
-				-- LibFroznFunctions:FireGroupEvent(PARENT_MOD_NAME, "OnConfigLoaded", TT_CacheForFrames, cfg, TT_ExtendedConfig);
-				
-				-- apply config
-				TipTac:ApplyConfig();
-				f:BuildCategoryPage();
-				f:BuildCategoryList();
-				
-				TipTac:AddMessageToChatFrame("{caption:" .. PARENT_MOD_NAME .. "}: Successfully imported new config.");
-			end
-		});
-	elseif (arg1 == "settingsExport") then
-		-- build export string with current config
-		local serializedConfig = LibSerialize:Serialize(cfg);
-		local compressedConfig = LibDeflate:CompressDeflate(serializedConfig);
-		local encodedConfig = LibDeflate:EncodeForPrint(compressedConfig);
-		
-		-- open popup with export string with current config
-		if (encodedConfig) then
-			LibFroznFunctions:ShowPopupWithText({
-				prompt = "Copy this export string with current config:",
-				lockedText = encodedConfig,
-				iconFile = "Interface\\AddOns\\" .. PARENT_MOD_NAME .. "\\media\\Talents",
-				iconTexCoord = { 0.924316, 0.942871, 0.000976562, 0.0361328 },
-				acceptButtonText = "Close",
-				onShowHandler = function(self, data)
-					-- fix icon position
-					local alertIcon = (self.AlertIcon or _G[self:GetName() .. "AlertIcon"]);
-					
-					if (not alertIcon) then
-						return;
-					end
-					
-					alertIcon:ClearAllPoints();
-					
-					if (self.Resize) then -- GameDialogMixin:Resize() available since tww 11.2.0
-						alertIcon:SetPoint("LEFT", 24, 6);
-					else
-						alertIcon:SetPoint("LEFT", 24, 3);
-					end
-				end
-			});
-		end
-	end
-	
 	-- close dropdown
 	CloseDropDownMenus();
 end
@@ -1026,36 +1032,6 @@ local function Misc_DropDownOnInitialize(dropDownMenu, level, menuList)
 	
 	if (level == 1) then
 		list:Push({
-			iconText = { "Interface\\HelpFrame\\HelpIcon-CharacterStuck", 64, 64, nil, nil, 0.1875, 0.796875, 0.203125, 0.796875 },
-			text = "Settings",
-			menuList = "settings"
-		});
-		list:Push({
-			iconText = { "Interface\\HelpFrame\\ReportLagIcon-Mail", 64, 64, nil, nil, 0.171875, 0.828125, 0.21875, 0.78125 },
-			text = "Report",
-			menuList = "report"
-		});
-		list:Push({
-			iconText = { "Interface\\AddOns\\" .. PARENT_MOD_NAME .. "\\media\\CommonIcons", 64, 64, nil, nil, 0.126465, 0.251465, 0.504883, 0.754883 },
-			text = "Cancel",
-			func = Misc_SettingsDropDownOnClick,
-			arg1 = "cancel"
-		});
-	elseif (menuList == "settings") then
-		list:Push({
-			iconText = { "Interface\\AddOns\\" .. PARENT_MOD_NAME .. "\\media\\Talents", 2048, 1024, nil, nil, 0.924316, 0.944824, 0.0380859, 0.0771484 },
-			text = "Import",
-			func = Misc_SettingsDropDownOnClick,
-			arg1 = "settingsImport"
-		});
-		list:Push({
-			iconText = { "Interface\\AddOns\\" .. PARENT_MOD_NAME .. "\\media\\Talents", 2048, 1024, nil, nil, 0.924316, 0.942871, 0.000976562, 0.0361328 },
-			text = "Export",
-			func = Misc_SettingsDropDownOnClick,
-			arg1 = "settingsExport"
-		});
-	elseif (menuList == "report") then
-		list:Push({
 			iconText = { "Interface\\HelpFrame\\HelpIcon-Bug", 64, 64, nil, nil, 0.1875, 0.78125, 0.1875, 0.78125 },
 			text = "Report bug",
 			menuList = "reportBug"
@@ -1064,6 +1040,12 @@ local function Misc_DropDownOnInitialize(dropDownMenu, level, menuList)
 			iconText = { "Interface\\HelpFrame\\HelpIcon-Suggestion", 64, 64, nil, nil, 0.21875, 0.765625, 0.234375, 0.78125 },
 			text = "Request feature",
 			menuList = "requestFeature"
+		});
+		list:Push({
+			iconText = { "Interface\\AddOns\\" .. PARENT_MOD_NAME .. "\\media\\CommonIcons", 64, 64, nil, nil, 0.126465, 0.251465, 0.504883, 0.754883 },
+			text = "Cancel",
+			func = Misc_SettingsDropDownOnClick,
+			arg1 = "cancel"
 		});
 	elseif (menuList == "reportBug") then
 		list:Push({
@@ -1123,7 +1105,7 @@ end
 local function Misc_OnEnter(self)
 	GameTooltip:SetOwner(self, "ANCHOR_RIGHT");
 	GameTooltip:AddLine("Misc", 1, 1, 1);
-	GameTooltip:AddLine("Import/Export settings, report bugs or request features.", nil, nil, nil, 1);
+	GameTooltip:AddLine("Report bugs or request features.", nil, nil, nil, 1);
 	GameTooltip:Show();
 end
 
@@ -1131,20 +1113,20 @@ local function Misc_OnLeave(self)
 	GameTooltip:Hide();
 end
 
-f.btnReport = CreateFrame("Button",nil,f,"UIPanelButtonTemplate");
-f.btnReport:SetSize(75,24);
-f.btnReport:SetPoint("LEFT",f.btnMisc,"RIGHT",9,0);
-f.btnReport:SetScript("OnClick", Misc_OnClick);
-f.btnReport:SetScript("OnEnter", Misc_OnEnter);
-f.btnReport:SetScript("OnLeave", Misc_OnLeave);
-f.btnReport:SetText("Misc");
+f.btnMisc = CreateFrame("Button",nil,f,"UIPanelButtonTemplate");
+f.btnMisc:SetSize(75,24);
+f.btnMisc:SetPoint("LEFT",f.btnReset,"RIGHT",9,0);
+f.btnMisc:SetScript("OnClick", Misc_OnClick);
+f.btnMisc:SetScript("OnEnter", Misc_OnEnter);
+f.btnMisc:SetScript("OnLeave", Misc_OnLeave);
+f.btnMisc:SetText("Misc");
 
-f.btnReport.dropDownMenu = CreateFrame("Frame", nil, f.btnReport, "UIDropDownMenuTemplate");
-UIDropDownMenu_Initialize(f.btnReport.dropDownMenu, Misc_DropDownOnInitialize, "MENU");
+f.btnMisc.dropDownMenu = CreateFrame("Frame", nil, f.btnMisc, "UIDropDownMenuTemplate");
+UIDropDownMenu_Initialize(f.btnMisc.dropDownMenu, Misc_DropDownOnInitialize, "MENU");
 
 f.btnClose = CreateFrame("Button",nil,f,"UIPanelButtonTemplate");
 f.btnClose:SetSize(75,24);
-f.btnClose:SetPoint("LEFT",f.btnReport,"RIGHT",10,0);
+f.btnClose:SetPoint("LEFT",f.btnMisc,"RIGHT",10,0);
 f.btnClose:SetScript("OnClick",function() f:Hide(); end);
 f.btnClose:SetText("Close");
 
@@ -1329,6 +1311,9 @@ function f:BuildCategoryPage(noUpdateScrollFrame)
 	local finalContentHeight = (newContentHeight or 0) + (contentChildMostBottom and contentChildMostBottom:GetHeight() or 0);
 	
 	f.content:SetHeight(finalContentHeight > 0 and finalContentHeight or 1);
+	
+	-- disable btnReset if necessary
+	f.btnReset:SetEnabled(not f.options[activePage].btnResetDisabled);
 end
 
 --------------------------------------------------------------------------------------------------------
