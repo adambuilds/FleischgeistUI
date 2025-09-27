@@ -170,6 +170,7 @@ function mod:OnBossEnable()
 	self:Log("SPELL_CAST_SUCCESS", "CollapsingStar", 1233093)
 	self:Log("SPELL_AURA_APPLIED", "DarkResidueApplied", 1233105)
 	self:Log("SPELL_AURA_APPLIED_DOSE", "DarkResidueApplied", 1233105)
+	self:Log("SPELL_AURA_REMOVED", "DarkResidueRemoved", 1233105)
 	self:Log("SPELL_AURA_APPLIED", "EventHorizonDamage", 1233968)
 	self:Log("SPELL_PERIODIC_DAMAGE", "EventHorizonDamage", 1233968)
 	self:Log("SPELL_PERIODIC_MISSED", "EventHorizonDamage", 1233968)
@@ -270,8 +271,6 @@ do
 			local time = GetTime()
 			if time - prev > 3 then -- end of intermission
 				prev = time
-				self:Message("stages", "green", CL.over:format(CL.intermission), false) -- Intermission Over
-				self:PlaySound("stages", "long")
 
 				-- reset for timers, totalcount on the bars
 				voidstepCount = 1
@@ -316,9 +315,12 @@ do
 				local nextMetaIcon = metaCount == 4 and 1231501 or metaCount == 3 and 1227117 or 1233863 -- All Meta, Fel Rush, Fel Devastation
 				local cd = shortStage and 22.5 or 101.7
 				if self:Heroic() then
-					cd = metaCount == 3 and 99.4 or 96.6 -- is this even good for heroic?
+					cd = metaCount == 4 and 62.5 or metaCount == 3 and 99.4 or 96.6
 				end
 				self:Bar("stages", cd, CL.count:format(CL.intermission, metaCount), nextMetaIcon) -- Intermission
+
+				self:Message("stages", "green", CL.over:format(CL.intermission), false) -- Intermission Over
+				self:PlaySound("stages", "long")
 			end
 		end
 	end
@@ -329,11 +331,12 @@ do
 	function mod:Metamorphosis(args)
 		if args.time - prev > 10 then -- next intermission
 			prev = args.time
-			self:StopBar(CL.count:format(CL.intermission, metaCount))
-			self:Message("stages", "cyan", CL.count:format(CL.intermission, metaCount), false) -- Intermission
-			self:PlaySound("stages", "long")
-			metaCount = metaCount + 1
 			infernalStrikeCount = 1
+			local msg = CL.count:format(CL.intermission, metaCount)
+			metaCount = metaCount + 1
+			self:StopBar(msg)
+			self:Message("stages", "cyan", msg, false) -- Intermission
+			self:PlaySound("stages", "long")
 		end
 	end
 end
@@ -366,13 +369,16 @@ function mod:UnendingHungerApplied(args)
 end
 
 function mod:Voidstep(args)
-	self:StopBar(CL.count:format(args.spellName, voidstepTotalCount))
-	self:Message(args.spellId, "cyan", CL.count:format(args.spellName, voidstepTotalCount))
-	self:PlaySound(args.spellId, "info") -- boss moving
-	voidstepCount = voidstepCount + 1
+	local msg = CL.count:format(args.spellName, voidstepTotalCount)
 	voidstepTotalCount = voidstepTotalCount + 1
-	if self:Mythic() and metaCount == 4 then return end -- only 1 cast in the last stage
-	self:Bar(args.spellId, timers[args.spellId][voidstepCount], CL.count:format(args.spellName, voidstepTotalCount))
+	voidstepCount = voidstepCount + 1
+	self:StopBar(msg)
+	self:Message(args.spellId, "cyan", msg)
+	local totalExpectedCasts = self:Mythic() and 7 or self:Heroic() and 11 or 12
+	if voidstepTotalCount <= totalExpectedCasts then
+		self:Bar(args.spellId, timers[args.spellId][voidstepCount], CL.count:format(args.spellName, voidstepTotalCount))
+	end
+	self:PlaySound(args.spellId, "info") -- boss moving
 end
 
 do
@@ -380,8 +386,8 @@ do
 	function mod:HungeringSlashDamage(args)
 		if self:Me(args.destGUID) and args.time - prev > 2 then
 			prev = args.time
-			self:PlaySound(args.spellId, "underyou", nil, args.destName)
 			self:PersonalMessage(args.spellId, "underyou")
+			self:PlaySound(args.spellId, "underyou", nil, args.destName)
 		end
 	end
 end
@@ -392,28 +398,30 @@ do
 		if not devourersIreOnMe -- You can soak void if you have Devourer's Ire so don't warn.
 		    and self:Me(args.destGUID) and args.time - prev > 2 then
 			prev = args.time
-			self:PlaySound(args.spellId, "underyou", nil, args.destName)
 			self:PersonalMessage(args.spellId, "underyou")
+			self:PlaySound(args.spellId, "underyou", nil, args.destName)
 		end
 	end
 end
 
 -- Intermission: The Ceaseless Hunger
 function mod:CollapsingStar(args)
-	if metaCount > 3 then return end
-	self:CastBar("stages", 25, CL.intermission:format(1), args.spellId)
+	if metaCount <= 3 then
+		self:CastBar("stages", 25, CL.intermission:format(1), args.spellId)
+	end
 end
 
 function mod:DarkResidueApplied(args)
 	if self:Me(args.destGUID) then
-		local highStacks = 3
-		local amount = args.amount or 1
-		self:StackMessage(args.spellId, "yellow", args.destName, amount, highStacks)
-		if amount >= highStacks then
-			self:PlaySound(args.spellId, "alarm", nil, args.destName) -- high stacks
-		else
-			self:PlaySound(args.spellId, "info", nil, args.destName) -- low stacks
-		end
+		self:StackMessage(args.spellId, "blue", args.destName, args.amount, 1)
+		self:PlaySound(args.spellId, "alarm", nil, args.destName)
+	end
+end
+
+function mod:DarkResidueRemoved(args)
+	if self:Me(args.destGUID) then
+		self:Message(args.spellId, "green", CL.removed:format(args.spellName))
+		self:PlaySound(args.spellId, "info", nil, args.destName)
 	end
 end
 
@@ -422,8 +430,8 @@ do
 	function mod:EventHorizonDamage(args)
 		if self:Me(args.destGUID) and args.time - prev > 2 then
 			prev = args.time
-			self:PlaySound(args.spellId, "underyou", nil, args.destName)
 			self:PersonalMessage(args.spellId, "underyou")
+			self:PlaySound(args.spellId, "underyou", nil, args.destName)
 		end
 	end
 end
@@ -436,18 +444,18 @@ do
 			subCount = 1
 			self:StopBar(CL.count:format(args.spellName, eradicateTotalCount))
 			self:Message(args.spellId, "cyan", CL.count_amount:format(args.spellName, subCount, 4))
-			self:PlaySound(args.spellId, "info")
 			eradicateTotalCount = eradicateTotalCount + 1
 			eradicateCount = eradicateCount + 1
 			self:Bar(args.spellId, timers[args.spellId][eradicateCount], CL.count:format(args.spellName, eradicateTotalCount))
 			self:Bar(args.spellId, 5, CL.count_amount:format(args.spellName, subCount + 1, 4))
+			self:PlaySound(args.spellId, "info")
 		else
 			subCount = subCount + 1
 			self:Message(args.spellId, "cyan", CL.count_amount:format(args.spellName, subCount, 4))
-			self:PlaySound(args.spellId, "info")
 			if subCount < 4 then
 				self:Bar(args.spellId, 5, CL.count_amount:format(args.spellName, subCount + 1, 4))
 			end
+			self:PlaySound(args.spellId, "info")
 		end
 	end
 end
@@ -473,10 +481,10 @@ do
 				messageText = CL.count_amount:format(CL.soak, subCount, 3)
 			end
 			self:TargetMessage(1227809, "orange", args.destName, messageText)
-			self:PlaySound(1227809, "long") -- watch charge(s)
 			theHuntCount = theHuntCount + 1
 			theHuntTotalCount = theHuntTotalCount + 1
-			if not self:Mythic() and metaCount ~= 4 then -- only 1 cast in the last stage
+			local totalExpectedCasts = self:Easy() and 8 or 7
+			if theHuntTotalCount <= totalExpectedCasts then
 				self:Bar(1227809, timers[1227809][theHuntCount], CL.count:format(CL.soak, theHuntTotalCount))
 			end
 		else -- Should only happen in Mythic
@@ -484,9 +492,11 @@ do
 			self:TargetMessage(1227809, "orange", args.destName, CL.count_amount:format(CL.soak, subCount, 3))
 		end
 		if self:Me(args.destGUID) then
-			self:PlaySound(1227809, "warning") -- line up / immune
 			self:Yell(1227809, CL.soak, nil, "Soak")
 			self:YellCountdown(1227809, 6, CL.soak, nil, "Soak")
+			self:PlaySound(1227809, "warning", nil, args.destName) -- line up / immune
+		elseif subCount == 1 then
+			self:PlaySound(1227809, "long") -- watch charge(s)
 		end
 	end
 end
@@ -495,20 +505,26 @@ function mod:BladeDance()
 	if self:Melee() then
 		self:StopBar(CL.count:format(CL.dodge, bladeDanceTotalCount))
 		self:Message(1241306, "red", CL.count:format(CL.dodge, bladeDanceTotalCount))
-		self:PlaySound(1241306, "alert") -- watch dances
 		bladeDanceCount = bladeDanceCount + 1
 		bladeDanceTotalCount = bladeDanceTotalCount + 1
-		self:Bar(1241306, timers[1241306][bladeDanceCount], CL.count:format(CL.dodge, bladeDanceTotalCount))
+		local totalExpectedCasts = self:Mythic() and 9 or self:Heroic() and 11 or 12
+		if bladeDanceTotalCount <= totalExpectedCasts then
+			self:Bar(1241306, timers[1241306][bladeDanceCount], CL.count:format(CL.dodge, bladeDanceTotalCount))
+		end
+		self:PlaySound(1241306, "alert") -- watch dances
 	end
 end
 
 function mod:EyeBeam(args)
 	self:StopBar(CL.count:format(args.spellName, eyeBeamTotalCount))
 	self:Message(args.spellId, "purple", CL.count:format(args.spellName, eyeBeamTotalCount))
-	-- self:PlaySound(args.spellId, "alert") -- Sounds from getting hit is enough.
 	eyeBeamCount = eyeBeamCount + 1
 	eyeBeamTotalCount = eyeBeamTotalCount + 1
-	self:Bar(args.spellId, timers[args.spellId][eyeBeamCount], CL.count:format(args.spellName, eyeBeamTotalCount))
+	local totalExpectedCasts = self:Mythic() and 9 or self:Heroic() and 11 or 12
+	if eyeBeamTotalCount <= totalExpectedCasts then
+		self:Bar(args.spellId, timers[args.spellId][eyeBeamCount], CL.count:format(args.spellName, eyeBeamTotalCount))
+	end
+	-- self:PlaySound(args.spellId, "alert") -- Sounds from getting hit is enough.
 end
 
 function mod:FelSingedApplied(args)
@@ -529,8 +545,9 @@ function mod:FelbladeApplied(args)
 end
 
 function mod:FelRushApplied(args)
-	if metaCount > 3 then return end
-	self:CastBar("stages", 24, CL.intermission:format(2), args.spellId)
+	if metaCount <= 3 then
+		self:CastBar("stages", 24, CL.intermission:format(2), args.spellId)
+	end
 end
 
 function mod:VelarynBloodwrathDeath(args)
@@ -548,14 +565,16 @@ end
 function mod:Fracture(args)
 	self:StopBar(CL.count:format(args.spellName, fractureTotalCount))
 	self:Message(args.spellId, "purple", CL.count:format(args.spellName, fractureTotalCount))
+	fractureCount = fractureCount + 1
+	fractureTotalCount = fractureTotalCount + 1
+	local totalExpectedCasts = self:Mythic() and 10 or self:Heroic() and 11 or 12
+	if fractureTotalCount <= totalExpectedCasts then
+		self:Bar(args.spellId, timers[args.spellId][fractureCount], CL.count:format(args.spellName, fractureTotalCount))
+	end
 	local unit = self:UnitTokenFromGUID(args.sourceGUID)
 	if unit and self:Tanking(unit) then
 		self:PlaySound(args.spellId, "alarm", nil, self:UnitName("player")) -- defensive
 	end
-	fractureCount = fractureCount + 1
-	fractureTotalCount = fractureTotalCount + 1
-	if self:Mythic() and metaCount == 4 then return end -- only 1 cast in the last stage
-	self:Bar(args.spellId, timers[args.spellId][fractureCount], CL.count:format(args.spellName, fractureTotalCount))
 end
 
 function mod:ShatteredSoulApplied(args)
@@ -588,11 +607,13 @@ end
 function mod:SpiritBomb(args)
 	self:StopBar(CL.count:format(CL.raid_damage, spiritBombTotalCount))
 	self:Message(args.spellId, "yellow", CL.count:format(CL.raid_damage, spiritBombTotalCount))
-	self:PlaySound(args.spellId, "alarm") -- raid damage
 	spiritBombCount = spiritBombCount + 1
 	spiritBombTotalCount = spiritBombTotalCount + 1
-	if self:Mythic() and metaCount == 4 then return end -- only 1 cast in the last stage
-	self:Bar(args.spellId, timers[args.spellId][spiritBombCount], CL.count:format(CL.raid_damage, spiritBombTotalCount))
+	local totalExpectedCasts = self:Mythic() and 10 or self:Heroic() and 11 or 12
+	if spiritBombTotalCount <= totalExpectedCasts then
+		self:Bar(args.spellId, timers[args.spellId][spiritBombCount], CL.count:format(CL.raid_damage, spiritBombTotalCount))
+	end
+	self:PlaySound(args.spellId, "alarm") -- raid damage
 end
 
 function mod:SoulcrushRemoved(args)
@@ -617,7 +638,6 @@ end
 function mod:InfernalStrike(args)
 	local text = metaCount == 5 and CL.count:format(CL.leap, infernalStrikeCount) or CL.count_amount:format(CL.leap, infernalStrikeCount, 3)
 	self:Message(args.spellId, "red", text)
-	self:PlaySound(args.spellId, "warning") -- watch leap location
 	infernalStrikeCount = infernalStrikeCount + 1
 	if metaCount > 4 or infernalStrikeCount <= 3 then -- 3 total in first intermission, infinite on last meta
 		local nextText = metaCount == 5 and CL.count:format(CL.leap, infernalStrikeCount) or CL.count_amount:format(CL.leap, infernalStrikeCount, 3)
@@ -626,6 +646,7 @@ function mod:InfernalStrike(args)
 	if metaCount <= 4 and infernalStrikeCount == 1 then
 		self:CastBar("stages", 25.5, CL.intermission:format(3), args.spellId)
 	end
+	self:PlaySound(args.spellId, "warning") -- watch leap location
 end
 
 -- function mod:FelDevastation(args) -- overkill? already have the leap warning, always happens after.
@@ -650,7 +671,6 @@ function mod:SigilOfChains(args)
 		self:Bar(args.spellId, {2.5, prevTimer}, CL.count:format(CL.pull_in, sigilOfChainsTotalCount))
 	end
 	self:Message(args.spellId, "yellow", CL.soon:format(CL.count:format(CL.pull_in, sigilOfChainsTotalCount)))
-	self:PlaySound(args.spellId, "warning") -- pull in
 	sigilOfChainsCount = sigilOfChainsCount + 1
 	sigilOfChainsTotalCount = sigilOfChainsTotalCount + 1
 	local timer = timers[args.spellId][sigilOfChainsCount]
@@ -658,6 +678,7 @@ function mod:SigilOfChains(args)
 		timer = timer + 2.5
 	end
 	self:Bar(args.spellId, timer, CL.count:format(CL.pull_in, sigilOfChainsTotalCount))
+	self:PlaySound(args.spellId, "warning") -- pull in
 end
 
 function mod:IlyssaDarksorrowDeath(args)

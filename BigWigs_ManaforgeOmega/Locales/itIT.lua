@@ -1,5 +1,10 @@
-local L = BigWigs:NewBossLocale("Loom'ithar", "itIT")
+local L = BigWigs:NewBossLocale("Plexus Sentinel", "itIT")
 if not L then return end
+if L then
+	--L.cleanse_the_chamber = "Wall"
+end
+
+L = BigWigs:NewBossLocale("Loom'ithar", "itIT")
 if L then
 	--L.lair_weaving = "Webs" -- Webs that spawn on the edge of the room
 	--L.infusion_pylons = "Pylons" -- Short for Infusion Pylons
@@ -20,7 +25,7 @@ end
 
 L = BigWigs:NewBossLocale("Fractillus", "itIT")
 if L then
-	--L.crystalline_eruption = "Walls"
+	--L.crystalline_shockwave = "Walls"
 	--L.shattershell = "Breaks"
 	--L.shockwave_slam = "Tank Wall"
 	--L.nexus_shrapnel = "Shrapnel Lands"
@@ -29,6 +34,7 @@ end
 
 L = BigWigs:NewBossLocale("Nexus-King Salhadaar", "itIT")
 if L then
+	--L.fractal_images = "Dragons"
 	--L.oath_bound_removed_dose = "1x Oath-Bound Removed"
 	--L.behead = "Claws" -- Claws of a dragon
 	--L.netherbreaker = "Circles"
@@ -39,15 +45,23 @@ end
 
 L = BigWigs:NewBossLocale("Dimensius, the All-Devouring", "itIT")
 if L then
-	--L.reverse_gravity = "Gravity" -- Short for Reverse Gravity
+	--L.gravity = "Gravity" -- Short for Reverse Gravity
 	--L.extinction = "Fragment" -- Dimensius hurls a fragment of a broken world
 	--L.slows = "Slows"
 	--L.slow = "Slow" -- Singular of Slows
+	--L.mass_destruction = "Lines"
+	--L.mass_destruction_single = "Line"
 	--L.stardust_nova = "Nova" -- Short for Stardust Nova
 	--L.extinguish_the_stars = "Stars" -- Short for Extinguish the Stars
 	--L.darkened_sky = "Rings"
-	--L.cosmic_collapse = "Collapse" -- Short for Cosmic Collapse
+	--L.cosmic_collapse = "Tank Pull"
+	--L.cosmic_collapse_easy = "Tank Smash"
 	--L.soaring_reshii = "Mount Available" -- On the timer for when flying is available
+
+	--L.left_living_mass = "Living Mass (Left)"
+	--L.right_living_mass = "Living Mass (Right)"
+
+	--L.soaring_reshii_monster_yell = "You've done well so far." -- [CHAT_MSG_MONSTER_YELL] You've done well so far. Surprising. But we're not done yet.#Xal'atath###Meeresflask##0#0##0#256#nil#0#false#false#false#false",
 
 	--L.weakened_soon_monster_yell = "We must strike--now!" -- [CHAT_MSG_MONSTER_YELL] We must strike--now!#Xal'atath###Xal'atath##0#0##0#4873#nil#0#false#false#false#false",
 end

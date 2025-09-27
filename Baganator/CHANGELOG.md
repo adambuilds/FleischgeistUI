@@ -1,6 +1,7 @@
 # Baganator
 
-## [731](https://github.com/Baganator/Baganator/tree/731) (2025-08-15)
-[Full Changelog](https://github.com/Baganator/Baganator/compare/730...731) 
+## [755](https://github.com/TheMouseNest/Baganator/tree/755) (2025-09-24)
+[Full Changelog](https://github.com/TheMouseNest/Baganator/compare/754...755) 
 
-- Fixes to avoid script timeouts on slow devices  
+- Integrate with "Item Upgrade Quality Icons" to show icons for upgrade tracks  
+- Move Masque code into Skins callback  

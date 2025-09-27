@@ -100,6 +100,10 @@ if (C_PlayerInfo.GetPlayerMythicPlusRatingSummary) then
 	tinsert(ttOptionsGeneral, { type = "DropDown", var = "mythicPlusDungeonScoreFormat", label = "Format Dungeon Score", list = { ["Dungeon Score only"] = "dungeonScore", ["Dungeon Score + Highest successfull run"] = "both", ["Highest successfull run only"] = "highestSuccessfullRun" }, enabled = function(factory) return factory:GetConfigValue("showUnitTip") end });
 end
 
+if (LibFroznFunctions:IsAddOnEnabled("MythicDungeonTools")) then
+	tinsert(ttOptionsGeneral, { type = "Check", var = "showMythicPlusForcesFromMDT", label = "Show Mythic+ Forces from Addon\nMythic Dungeon Tools (MDT) for NPCs", tip = "This will show the mythic+ forces from addon Mythic Dungeon Tools (MDT) for NPCs.", enabled = function(factory) return factory:GetConfigValue("showUnitTip") end });
+end
+
 tinsert(ttOptionsGeneral, { type = "Check", var = "showMount", label = "Show Mount", tip = "This will show the current mount of the player.", enabled = function(factory) return factory:GetConfigValue("showUnitTip") end, y = 10 });
 tinsert(ttOptionsGeneral, { type = "Check", var = "showMountCollected", label = "Collected", tip = "This option makes the tip show an icon indicating if you already have collected the mount.", enabled = function(factory) return factory:GetConfigValue("showUnitTip") and factory:GetConfigValue("showMount") end, x = 122 });
 tinsert(ttOptionsGeneral, { type = "Check", var = "showMountIcon", label = "Icon", tip = "This option makes the tip show the mount icon.", enabled = function(factory) return factory:GetConfigValue("showUnitTip") and factory:GetConfigValue("showMount") end, x = 210 });
@@ -121,6 +125,9 @@ tinsert(ttOptionsGeneral, { type = "Check", var = "showGuildRank", label = "Show
 tinsert(ttOptionsGeneral, { type = "DropDown", var = "guildRankFormat", label = "Format Guild Rank", list = { ["Title only"] = "title", ["Title + level"] = "both", ["Level only"] = "level" }, enabled = function(factory) return factory:GetConfigValue("showUnitTip") and factory:GetConfigValue("showGuild") and factory:GetConfigValue("showGuildRank") end });
 tinsert(ttOptionsGeneral, { type = "Check", var = "showGuildMemberNote", label = "Show Player Guild Member Note", tip = "This will show the guild member note of the player.", enabled = function(factory) return factory:GetConfigValue("showUnitTip") end });
 tinsert(ttOptionsGeneral, { type = "Check", var = "showGuildOfficerNote", label = "Show Player Guild Officer Note", tip = "This will show the guild officer note of the player.", enabled = function(factory) return factory:GetConfigValue("showUnitTip") end });
+
+tinsert(ttOptionsGeneral, { type = "DropDown", var = "showPlayerLocation", label = "Show Player Location", tip = "Location data is only available for your player and party members. Zone and Subzone is only available for your player. The map for your player will only be shown if it's different from the zone.", list = { ["|cffffa0a0Do not show"] = "none", ["Show map/zone/subzone"] = "mapAndZoneAndSubzone", ["Show map/zone"] = "mapAndZone", ["Show map only"] = "map", ["Show zone/subzone"] = "zoneAndSubzone", ["Show zone only"] = "zone" }, enabled = function(factory) return factory:GetConfigValue("showUnitTip") end, y = 10 });
+tinsert(ttOptionsGeneral, { type = "Check", var = "showPlayerLocationOnlyForeignMap", label = "Only show map for party members\non a foreign map", tip = "This will only show the map for party members on a foreign map.", enabled = function(factory) return factory:GetConfigValue("showUnitTip") and LibFroznFunctions:ExistsInTable(factory:GetConfigValue("showPlayerLocation"), { "mapAndZoneAndSubzone", "mapAndZone", "map" }) end });
 
 tinsert(ttOptionsGeneral, { type = "Check", var = "showBattlePetTip", label = "Enable Battle Pet Tips", tip = "Will show a special tip for both wild and companion battle pets. Might need to be disabled for certain non-English clients", enabled = function(factory) return factory:GetConfigValue("showUnitTip") end, y = 10 });
 
@@ -806,6 +813,7 @@ if (TipTacItemRef) then
 	
 	tinsert(ttifOptions, { type = "Check", var = "if_showIcon", label = "Show Icon Texture and Stack Count (when available)", tip = "Shows an icon next to the tooltip. For items, the stack count will also be shown", enabled = function(factory) return factory:GetConfigValue("if_enable") end });
 	tinsert(ttifOptions, { type = "Check", var = "if_smartIcons", label = "Smart Icon Appearance", tip = "When enabled, TipTacItemRef will determine if an icon is needed, based on where the tip is shown. It will not be shown on actionbars or bag slots for example, as they already show an icon", enabled = function(factory) return factory:GetConfigValue("if_enable") and factory:GetConfigValue("if_showIcon") end });
+	tinsert(ttifOptions, { type = "Check", var = "if_smartIconsShowStackCount", label = "Always Show Icon If Stack Count Is Available", tip = "When eabled, the icon will always be shown if a stack count is available.", enabled = function(factory) return factory:GetConfigValue("if_enable") and factory:GetConfigValue("if_showIcon") and factory:GetConfigValue("if_smartIcons") end });
 	tinsert(ttifOptions, { type = "DropDown", var = "if_stackCountToTooltip", label = "Show Stack Count in\nTooltip", list = { ["|cffffa0a0Do not show"] = "none", ["Always"] = "always", ["Only if icon is not shown"] = "noicon" }, enabled = function(factory) return factory:GetConfigValue("if_enable") end });
 	tinsert(ttifOptions, { type = "Check", var = "if_showIconId", label = "Show Icon ID", tip = "For tooltips with icon, show their iconID", enabled = function(factory) return factory:GetConfigValue("if_enable") end });
 	tinsert(ttifOptions, { type = "Check", var = "if_borderlessIcons", label = "Borderless Icons", tip = "Turn off the border on icons", enabled = function(factory) return factory:GetConfigValue("if_enable") and factory:GetConfigValue("if_showIcon") end });
@@ -933,6 +941,7 @@ local function Reset_OnClick(self)
 		if (option.var) then
 			cfg[option.var] = nil;	-- when cleared, they will read the default value from the metatable
 		end
+		configDb:RegisterDefaults(configDb.defaults);
 	end
 	TipTac:ApplyConfig();
 	f:BuildCategoryPage();

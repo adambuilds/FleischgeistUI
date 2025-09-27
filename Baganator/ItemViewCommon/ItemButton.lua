@@ -473,7 +473,7 @@ end
 function BaganatorRetailCachedItemButtonMixin:SetItemDetails(details)
   self:SetItemButtonTexture(details.iconTexture)
   self:SetItemButtonQuality(details.quality, details.itemLink, false, details.isBound)
-  self:SetItemButtonCount(details.itemCount)
+  SetItemButtonCount(self, details.itemCount, details.itemCount and details.itemCount > 9999) -- true results in abbreviating large numbers
   SetItemButtonDesaturated(self, false);
   ReparentOverlays(self)
 
@@ -587,45 +587,12 @@ function BaganatorRetailLiveContainerItemButtonMixin:MyOnLoad()
   end)
 end
 
-function BaganatorRetailLiveContainerItemButtonMixin:PreClickHook()
-  -- Automatically use the reagent bank when at the bank transferring crafting
-  -- reagents if there is space
-  if not Syndicator.Constants.CharacterBankTabsActive and BankFrame:IsShown() and self.BGR and self.BGR.itemID and BankFrame.activeTabIndex ~= addonTable.Constants.BlizzardBankTabConstants.Warband then
-    BankFrame.selectedTab = 1
-
-    local _
-    self.BGR.stackLimit, _, _, _, _, _, _, _, _, self.BGR.isReagent = select(8, C_Item.GetItemInfo(self.BGR.itemID))
-    if self.BGR.isReagent then
-      local bank = Syndicator.API.GetCharacter(Syndicator.API.GetCurrentCharacter()).bank
-      local reagentBank = bank[tIndexOf(Syndicator.Constants.AllBankIndexes, Enum.BagIndex.Reagentbank)]
-      local emptySlotFound = false
-      --Find a matching stack for the item, prioritising reagent bank
-      for _, item in ipairs(reagentBank) do
-        if item.itemID == self.BGR.itemID and self.BGR.stackLimit - item.itemCount >= self.BGR.itemCount then
-          BankFrame.selectedTab = 2
-          return
-        elseif item.itemID == nil then -- Got an empty slot, remember this for if no stacks found
-          emptySlotFound = true
-        end
-      end
-
-      -- Find a matching stack in the regular bank
-      for index, bag in ipairs(bank) do
-        if Syndicator.Constants.AllBankIndexes[index] ~= Enum.BagIndex.Reagentbank then
-          for _, slot in ipairs(bag) do
-            if slot.itemID == self.BGR.itemID and slot.itemCount + self.BGR.itemCount <= self.BGR.stackLimit then
-              return
-            end
-          end
-        end
-      end
-
-      -- No matching stacks, find an empty slot in the reagent bank (if
-      -- possible)
-      if emptySlotFound then
-        BankFrame.selectedTab = 2
-      end
-    end
+local queue = {}
+local callbackHolder = {}
+function BaganatorRetailLiveContainerItemButtonMixin:PreClickHook(mouseButton)
+  if mouseButton == "RightButton" and not IsModifiedClick() and BankFrame:IsShown() and BankPanel:IsShown() and tIndexOf(Syndicator.Constants.AllBagIndexes, self:GetParent():GetID()) ~= nil and 
+      self.BGR.itemLocation and C_Item.DoesItemExist(self.BGR.itemLocation) and C_Bank.IsItemAllowedInBankType(BankPanel:GetActiveBankType(), self.BGR.itemLocation) then
+    addonTable.BankTransferManager:Queue(self:GetParent():GetID(), self:GetID())
   end
 end
 
@@ -679,7 +646,7 @@ function BaganatorRetailLiveContainerItemButtonMixin:SetItemDetails(cacheData)
 
   self:SetItemButtonQuality(quality, nil, true, isBound);
 
-  SetItemButtonCount(self, itemCount);
+  SetItemButtonCount(self, itemCount, itemCount and itemCount > 9999); -- true results in abbreviating large numbers
   SetItemButtonDesaturated(self, locked);
 
   self:UpdateExtended();
@@ -971,7 +938,7 @@ function BaganatorClassicCachedItemButtonMixin:SetItemDetails(details)
   SetItemButtonTexture(self, details.iconTexture);
   SetItemButtonQuality(self, details.quality); -- Doesn't do much
   ApplyQualityBorderClassic(self, details.quality)
-  SetItemButtonCount(self, details.itemCount);
+  SetItemButtonCount(self, details.itemCount, details.itemCount and details.itemCount > 9999);
   SetItemButtonDesaturated(self, false)
 end
 
@@ -1164,7 +1131,7 @@ function BaganatorClassicLiveContainerItemButtonMixin:SetItemDetails(cacheData)
   SetItemButtonTexture(self, texture);
   SetItemButtonQuality(self, quality, itemID);
   ApplyQualityBorderClassic(self, quality)
-  SetItemButtonCount(self, itemCount);
+  SetItemButtonCount(self, itemCount, itemCount and itemCount > 9999);
   SetItemButtonDesaturated(self, locked);
   _G[self:GetName() .. "Cooldown"]:Hide()
 

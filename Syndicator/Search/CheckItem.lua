@@ -209,7 +209,7 @@ local function KnowledgeCheck(details)
   if spellID == nil then
     return false
   end
-  if spellID and not spellName then
+  if spellID and (not spellName or not C_Spell.IsSpellDataCached(spellID)) then
     C_Spell.RequestLoadSpellData(spellID)
     return nil
   end
@@ -629,7 +629,7 @@ local function UseCheck(details)
     for _, row in ipairs(details.tooltipInfoSpell.lines) do
       if row.leftColor.r == 0 and row.leftColor.g == 1 and row.leftColor.b == 0 and row.leftText:match("^" .. ITEM_SPELL_TRIGGER_ONUSE) then
         usableSeen = true
-      elseif row.leftColor.r == 1 and row.leftColor.g < 0.2 and row.leftColor.b < 0.2 then
+      elseif row.leftColor.r == 1 and row.leftColor.g < 0.2 and row.leftColor.b < 0.2 and row.leftText ~= SPELL_FAILED_NOT_HERE then
         return false
       end
     end
@@ -642,7 +642,7 @@ local function UsableCheck(details)
 
   if details.tooltipInfoSpell then
     for _, row in ipairs(details.tooltipInfoSpell.lines) do
-      if row.leftColor.r == 1 and row.leftColor.g < 0.2 and row.leftColor.b < 0.2 then
+      if row.leftColor.r == 1 and row.leftColor.g < 0.2 and row.leftColor.b < 0.2 and row.leftText ~= SPELL_FAILED_NOT_HERE  then
         return false
       end
       if row.rightColor and row.rightColor.r == 1 and row.rightColor.g < 0.2 and row.rightColor.b < 0.2 then
@@ -653,7 +653,7 @@ local function UsableCheck(details)
   end
 end
 
-local function ActiveCheck(details)
+local function ActiveSeasonCheck(details)
   if not C_Item.IsItemDataCachedByID(details.itemID) then
     C_Item.RequestLoadItemDataByID(details.itemID)
     return
@@ -678,6 +678,11 @@ local function ActiveCheck(details)
     end
     return true
   end
+end
+
+local function CurrentExpansionCheck(details)
+  details.expacID = details.expacID or Syndicator.Search.GetExpansion(details)
+  return details.expacID and details.expacID == LE_EXPANSION_LEVEL_CURRENT
 end
 
 local function OpenCheck(details)
@@ -845,8 +850,22 @@ local function LockedCheck(details)
   return false
 end
 
-local function CraftedCheck(details)
-  return details.quality ~= 7 and details.classID ~= Enum.ItemClass.Questitem and details.itemLink:match("Player-") ~= nil
+local CraftedCheck
+if Syndicator.Constants.IsEra then
+  local craftedClasses = {
+    [Enum.ItemClass.Armor] = true,
+    [Enum.ItemClass.Weapon] = true,
+    [Enum.ItemClass.Container] = true,
+    [Enum.ItemClass.Quiver] = true,
+  }
+  CraftedCheck = function(details)
+    local _, _, _, _, _, classID = C_Item.GetItemInfoInstant(details.itemID)
+    return craftedClasses[classID] ~= nil and CraftInfoAnywhere ~= nil and CraftInfoAnywhere.Data.ItemsToRecipes[details.itemID] ~= nil
+  end
+else
+  CraftedCheck = function(details)
+    return (details.quality ~= 7 and details.classID ~= Enum.ItemClass.Questitem and details.itemLink:match("Player%-") ~= nil)
+  end
 end
 
 local function SetBonusCheck(details)
@@ -1039,6 +1058,7 @@ AddKeywordLocalised("KEYWORD_CRAFTED", CraftedCheck, Syndicator.Locales.GROUP_IT
 AddKeywordLocalised("KEYWORD_TIER_TOKEN", TierTokenCheck, Syndicator.Locales.GROUP_ITEM_TYPE)
 AddKeywordLocalised("KEYWORD_ENSEMBLE", EnsembleCheck, Syndicator.Locales.GROUP_ITEM_TYPE)
 AddKeywordLocalised("KEYWORD_ARSENAL", ArsenalCheck, Syndicator.Locales.GROUP_ITEM_TYPE)
+AddKeywordLocalised("KEYWORD_CURRENT_EXPANSION", CurrentExpansionCheck, Syndicator.Locales.GROUP_EXPANSION)
 
 if Syndicator.Constants.IsRetail then
   AddKeywordLocalised("KEYWORD_COSMETIC", CosmeticCheck, Syndicator.Locales.GROUP_QUALITY)
@@ -1049,7 +1069,7 @@ if Syndicator.Constants.IsRetail then
   AddKeywordLocalised("KEYWORD_SET_BONUS", SetBonusCheck, Syndicator.Locales.GROUP_ITEM_DETAIL)
   AddKeywordLocalised("KEYWORD_CATALYST", CatalystCheck, Syndicator.Locales.GROUP_ITEM_DETAIL)
   AddKeywordLocalised("KEYWORD_CATALYST_UPGRADE", CatalystUpgradeCheck, Syndicator.Locales.GROUP_ITEM_DETAIL)
-  AddKeywordLocalised("KEYWORD_ACTIVE_SEASON", ActiveCheck, Syndicator.Locales.GROUP_ITEM_DETAIL)
+  AddKeywordLocalised("KEYWORD_ACTIVE_SEASON", ActiveSeasonCheck, Syndicator.Locales.GROUP_ITEM_DETAIL)
   if Syndicator.Constants.WarbandBankActive then
     AddKeywordManual(ITEM_ACCOUNTBOUND:lower(), "warbound", BindOnAccountCheck, Syndicator.Locales.GROUP_BINDING_TYPE)
     AddKeywordManual(ITEM_ACCOUNTBOUND_UNTIL_EQUIP:lower(), "warbound until equipped", WarboundUntilEquippedCheck, Syndicator.Locales.GROUP_BINDING_TYPE)
@@ -1430,7 +1450,7 @@ for s, english in pairs(stats) do
     AddKeywordManual(keyword:lower(), english, GetGemStatCheck(keyword), Syndicator.Locales.GROUP_STAT)
   end
 end
-AddKeywordManual(STAT_ARMOR:lower(), "armor", GetGemStatCheck(STAT_ARMOR), Syndicator.Locales.GROUP_STAT)
+AddKeywordLocalised("KEYWORD_ARMOR_STAT", GetGemStatCheck(STAT_ARMOR), Syndicator.Locales.GROUP_STAT)
 if Syndicator.Constants.IsClassic then
   local resistances = {
     "holy resistance",
@@ -2081,6 +2101,8 @@ function Syndicator.Search.InitializeSearchEngine()
   end
 
   local armorTypesToCheck = {
+    --[0] = "miscellaneous", -- handled separately
+    --[1] = "cloth", -- also handled separately
     [2] = "leather",
     [3] = "mail",
     [4] = "plate",
@@ -2111,28 +2133,32 @@ function Syndicator.Search.InitializeSearchEngine()
     GetClassSubClass(details)
     return details.classID == Enum.ItemClass.Armor and details.subClassID == Enum.ItemArmorSubclass.Cloth
   end, Syndicator.Locales.GROUP_ARMOR_TYPE)
+  AddKeywordLocalised("KEYWORD_MISCELLANEOUS_ARMOR", function(details)
+    GetClassSubClass(details)
+    return details.classID == Enum.ItemClass.Armor and details.subClassID == 0
+  end, Syndicator.Locales.GROUP_ARMOR_TYPE)
 
   local weaponTypesToCheck = {
-    "two-handed axes",
-    "bows",
-    "guns",
-    "one-handed maces",
-    "two-handed maces",
-    "polearms",
-    "one-handed swords",
-    "two-handed swords",
-    "warglaives",
-    "staves",
-    "bear claws",
-    "catclaws",
-    "fist weapons",
-    "miscellaneous",
-    "daggers",
-    "thrown",
-    "spears",
-    "crossbows",
-    "wands",
-    "fishing poles",
+    [1] = "two-handed axes",
+    [2] = "bows",
+    [3] = "guns",
+    [4] = "one-handed maces",
+    [5] = "two-handed maces",
+    [6] = "polearms",
+    [7] = "one-handed swords",
+    [8] = "two-handed swords",
+    [9] = "warglaives",
+    [10] = "staves",
+    [11] = "bear claws",
+    [12] = "catclaws",
+    [13] = "fist weapons",
+    --[14] = "miscellaneous", -- handled elsewhere
+    [15] = "daggers",
+    [16] = "thrown",
+    [17] = "spears",
+    [18] = "crossbows",
+    [19] = "wands",
+    [20] = "fishing poles",
     [0] = "one-handed axes",
   }
   if Syndicator.Constants.IsClassic then
@@ -2153,6 +2179,10 @@ function Syndicator.Search.InitializeSearchEngine()
       end, Syndicator.Locales.GROUP_WEAPON_TYPE)
     end
   end
+  AddKeywordLocalised("KEYWORD_MISCELLANEOUS_WEAPON", function(details)
+    GetClassSubClass(details)
+    return details.classID == Enum.ItemClass.Armor and details.subClassID == 14
+  end, Syndicator.Locales.GROUP_WEAPON_TYPE)
 
   local recipeTypesToCheck = {
     "leatherworking",

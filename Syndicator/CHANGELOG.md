@@ -1,6 +1,6 @@
 # Syndicator
 
-## [227](https://github.com/Baganator/Syndicator/tree/227) (2025-08-15)
-[Full Changelog](https://github.com/Baganator/Syndicator/compare/226...227) 
+## [238](https://github.com/TheMouseNest/Syndicator/tree/238) (2025-09-23)
+[Full Changelog](https://github.com/TheMouseNest/Syndicator/compare/237...238) 
 
-- Update logo  
+- All: Unify toc lines (client restart required)  

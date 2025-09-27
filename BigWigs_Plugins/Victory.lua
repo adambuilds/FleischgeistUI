@@ -38,7 +38,7 @@ plugin.pluginOptions = {
 			end
 		end
 	end,
-	order = 7,
+	order = 9,
 	args = {
 		heading = {
 			type = "description",
@@ -117,6 +117,11 @@ do
 			shouldRestoreBanner = true
 			BossBanner:UnregisterEvent("BOSS_KILL")
 		end
+	end
+
+	function plugin:OnRegister()
+		updateProfile()
+		self:SimpleTimer(function() local played, id = self:PlaySoundFile(media:Fetch(SOUND, self.db.profile.soundName)) if played then StopSound(id) end end, 0)
 	end
 
 	function plugin:OnPluginEnable()

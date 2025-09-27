@@ -46,6 +46,7 @@ local TT_DefaultConfig = {
 	showCurrentUnitSpeed = true,
 	showMythicPlusDungeonScore = true,
 	mythicPlusDungeonScoreFormat = "both",
+	showMythicPlusForcesFromMDT = true,
 	showMount = true,
 	showMountCollected = true,
 	showMountIcon = true,
@@ -64,6 +65,8 @@ local TT_DefaultConfig = {
 	guildRankFormat = "both",
 	showGuildMemberNote = true,
 	showGuildOfficerNote = true,
+	showPlayerLocation = "mapAndZoneAndSubzone",
+	showPlayerLocationOnlyForeignMap = true,
 	showBattlePetTip = true,
 	hidePvpText = true,
 	hideSpecializationAndClassText = true,
@@ -207,7 +210,7 @@ local TT_DefaultConfig = {
 	barTexture = "Interface\\TargetingFrame\\UI-StatusBar",
 	barHeight = 6,
 	barEnableTipMinimumWidth = true,
-	barTipMinimumWidth = 180,
+	barTipMinimumWidth = 170,
 	
 	-- auras
 	enableAuras = true,

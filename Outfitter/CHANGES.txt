@@ -1,0 +1,118 @@
+lightweight tag 408ed0e13fa460b73ac794bdbbe612408317b498 5.5.0.2
+Author:	GitHub <noreply@github.com>
+Date:	Wed Aug 27 14:25:38 2025 -0700
+
+commit ab87ceadd03cbf0b253379f9abedc827912ef522
+Author: govtgeek <26489473+GovtGeek@users.noreply.github.com>
+Date:   Wed Aug 27 14:16:22 2025 -0700
+
+    Bumped version
+
+commit ab87ceadd03cbf0b253379f9abedc827912ef522
+Author: govtgeek <26489473+GovtGeek@users.noreply.github.com>
+Date:   Wed Aug 27 14:16:22 2025 -0700
+
+    Bumped version
+
+commit ab87ceadd03cbf0b253379f9abedc827912ef522
+Author: govtgeek <26489473+GovtGeek@users.noreply.github.com>
+Date:   Wed Aug 27 14:16:22 2025 -0700
+
+    Bumped version
+
+commit cc0183910df76ce47d2b13a54acced1c0309c816
+Author: govtgeek <26489473+GovtGeek@users.noreply.github.com>
+Date:   Wed Aug 27 14:16:00 2025 -0700
+
+    Fixed possible lua error when printing debug information
+
+commit 2ecd321e7a81b8cae75696cd3a1f6f870de04e8e
+Author: govtgeek <26489473+GovtGeek@users.noreply.github.com>
+Date:   Mon Aug 18 15:04:00 2025 -0700
+
+    Reworking workflow
+
+commit 347407483c32baed8b288b55ea18b22d129d4793
+Author: govtgeek <26489473+GovtGeek@users.noreply.github.com>
+Date:   Mon Aug 18 15:01:10 2025 -0700
+
+    Reworking workflow
+
+commit 6d46eb11ddc7d85348abe3169e99f73cab291915
+Author: govtgeek <26489473+GovtGeek@users.noreply.github.com>
+Date:   Mon Aug 18 14:59:11 2025 -0700
+
+    Reworking workflow
+
+commit 5a0d0cd69fda16a6476513381abb9a9979add736
+Author: govtgeek <26489473+GovtGeek@users.noreply.github.com>
+Date:   Mon Aug 18 14:56:51 2025 -0700
+
+    Reworking workflow
+
+commit 4472c2a606a7470d4f0428e55d770fdc2c8f26b1
+Author: govtgeek <26489473+GovtGeek@users.noreply.github.com>
+Date:   Mon Aug 18 14:53:54 2025 -0700
+
+    Reworking workflow
+
+commit 73653519f53c32f81197f0ebbbcbd6b0c479be58
+Author: govtgeek <26489473+GovtGeek@users.noreply.github.com>
+Date:   Mon Aug 18 14:50:10 2025 -0700
+
+    Reworking workflow (local build focus first)
+
+commit 8e26fa6ddcb9b4fd8a00771b6e90fc87473ba3c5
+Author: govtgeek <26489473+GovtGeek@users.noreply.github.com>
+Date:   Mon Aug 18 14:18:48 2025 -0700
+
+    Changed runs-on back to ubuntu-latest
+
+commit 101c9869a46e4bd0ecee8a1457928a45226d2554
+Author: govtgeek <26489473+GovtGeek@users.noreply.github.com>
+Date:   Mon Aug 18 14:16:55 2025 -0700
+
+    Changed default build to not be a local build
+
+commit dff8de587c48cae85cb5f5ccbb7c517bc0832268
+Author: govtgeek <26489473+GovtGeek@users.noreply.github.com>
+Date:   Mon Aug 18 14:12:03 2025 -0700
+
+    Fixed spacing issue for GenerateSmartUnequipScript when using a delay
+
+commit dff8de587c48cae85cb5f5ccbb7c517bc0832268
+Author: govtgeek <26489473+GovtGeek@users.noreply.github.com>
+Date:   Mon Aug 18 14:12:03 2025 -0700
+
+    Fixed spacing issue for GenerateSmartUnequipScript when using a delay
+
+commit a3b58b7403baa576a8e7e57b660d3a1b27463c93
+Author: GovtGeek <26489473+GovtGeek@users.noreply.github.com>
+Date:   Mon Aug 18 11:55:12 2025 -0700
+
+    Update README.md
+
+commit d83a27a3bdad528eabd286cd54d75da2a4652ecf
+Author: GovtGeek <26489473+GovtGeek@users.noreply.github.com>
+Date:   Wed Aug 13 14:59:03 2025 -0700
+
+    Update OutfitterScripting.lua
+    
+    Minor edit to hopefully fix conflicts with merging
+
+commit d83a27a3bdad528eabd286cd54d75da2a4652ecf
+Author: GovtGeek <26489473+GovtGeek@users.noreply.github.com>
+Date:   Wed Aug 13 14:59:03 2025 -0700
+
+    Update OutfitterScripting.lua
+    
+    Minor edit to hopefully fix conflicts with merging
+
+commit d83a27a3bdad528eabd286cd54d75da2a4652ecf
+Author: GovtGeek <26489473+GovtGeek@users.noreply.github.com>
+Date:   Wed Aug 13 14:59:03 2025 -0700
+
+    Update OutfitterScripting.lua
+    
+    Minor edit to hopefully fix conflicts with merging
+

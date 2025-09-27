@@ -12,18 +12,14 @@ if not plugin then return end
 plugin.displayName = L.nameplates
 
 local db = nil
-local media = LibStub("LibSharedMedia-3.0")
-local FONT = media.MediaType and media.MediaType.FONT or "font"
+local LibSharedMedia = LibStub("LibSharedMedia-3.0")
+local FONT = LibSharedMedia.MediaType and LibSharedMedia.MediaType.FONT or "font"
 
 local nameplateIcons, iconFrameCache, nameplateTexts, textFrameCache = {}, {}, {}, {}
 local startNameplateIcon, showNameplateText
 local rearrangeNameplateIcons, rearrangeNameplateTexts
 local removeFrame, frameStopped
 
-local validFramePoints = {
-	["TOPLEFT"] = L.TOPLEFT, ["TOPRIGHT"] = L.TOPRIGHT, ["BOTTOMLEFT"] = L.BOTTOMLEFT, ["BOTTOMRIGHT"] = L.BOTTOMRIGHT,
-	["TOP"] = L.TOP, ["BOTTOM"] = L.BOTTOM, ["LEFT"] = L.LEFT, ["RIGHT"] = L.RIGHT, ["CENTER"] = L.CENTER,
-}
 local validGrowDirections = {
 	RIGHT = L.RIGHT,
 	LEFT = L.LEFT,
@@ -121,7 +117,7 @@ local iconDefaults = {
 	iconWidthOthers = 20,
 	iconHeightOthers = 20,
 	iconCooldownNumbers = true,
-	iconFontName = "Noto Sans Regular", -- Only dealing with numbers so we can use this on all locales
+	iconFontName = "Noto Sans Medium", -- Only dealing with numbers so we can use this on all locales
 	iconFontSize = 8,
 	iconFontColor = {1, 1, 1, 1},
 	iconFontOutline = "OUTLINE",
@@ -145,9 +141,17 @@ local iconDefaults = {
 	iconGlowProcStartAnim = true,
 	iconGlowProcAnimDuration = 1,
 	iconGlowTimeLeft = 0,
+	iconGlowOffsetX = 0,
+	iconGlowOffsetY = 0,
 	iconBorder = true,
+	iconBorderName = "Solid",
+	iconBorderOffset = 0,
 	iconBorderSize = 1,
 	iconBorderColor = {0, 0, 0, 1},
+	iconFrameStrata = "MEDIUM",
+	iconEmphasizeTime = 0,
+	iconEmphasizeFontColor = {1, 1, 1, 1},
+	iconEmphasizeFontSize = 8,
 }
 
 local textDefaults = {
@@ -165,7 +169,6 @@ local textDefaults = {
 }
 
 plugin.defaultDB = {
-	migratePosition = false,
 }
 for k, v in next, iconDefaults do
 	plugin.defaultDB[k] = v
@@ -174,184 +177,192 @@ for k, v in next, textDefaults do
 	plugin.defaultDB[k] = v
 end
 
-local function updateProfile()
-	db = plugin.db.profile
-
-	if not db.migratePosition then -- XXX temp
-		db.migratePosition = true
-		db.iconGrowDirectionTarget = db.iconGrowDirection
-		db.iconGrowDirectionStartTarget = db.iconGrowDirectionStart
-		db.iconSpacingTarget = db.iconSpacing
-		db.iconOffsetXTarget = db.iconOffsetX
-		db.iconOffsetYTarget = db.iconOffsetY
-	end
-
-	for k, v in next, db do
-		local defaultType = type(plugin.defaultDB[k])
-		if defaultType == "nil" then
-			db[k] = nil
-		elseif type(v) ~= defaultType then
-			db[k] = plugin.defaultDB[k]
+local iconBorderTable
+local updateProfile
+do
+	local function ValidateColor(current, default, alphaLimit)
+		for i = 1, 3 do
+			local n = current[i]
+			if type(n) ~= "number" or n < 0 or n > 1 then
+				current[1] = default[1] -- If 1 entry is bad, reset the whole table
+				current[2] = default[2]
+				current[3] = default[3]
+				current[4] = default[4]
+				return
+			end
+		end
+		if alphaLimit then
+			if type(current[4]) ~= "number" or current[4] < alphaLimit or current[4] > 1 then
+				current[4] = default[4]
+			end
+		elseif current[4] then
+			current[4] = nil
 		end
 	end
 
-	if not validGrowDirections[db.iconGrowDirection] then
-		db.iconGrowDirection = plugin.defaultDB.iconGrowDirection
-	end
-	if not validFramePoints[db.iconGrowDirectionStart] then
-		db.iconGrowDirectionStart = plugin.defaultDB.iconGrowDirectionStart
-	end
-	if not validGrowDirections[db.iconGrowDirectionTarget] then
-		db.iconGrowDirectionTarget = plugin.defaultDB.iconGrowDirectionTarget
-	end
-	if not validFramePoints[db.iconGrowDirectionStartTarget] then
-		db.iconGrowDirectionStartTarget = plugin.defaultDB.iconGrowDirectionStartTarget
-	end
-	if db.iconSpacing < 0 or db.iconSpacing > 20 then
-		db.iconSpacing = plugin.defaultDB.iconSpacing
-	end
-	if db.iconSpacingTarget < 0 or db.iconSpacingTarget > 20 then
-		db.iconSpacingTarget = plugin.defaultDB.iconSpacingTarget
-	end
-	if db.iconWidthTarget < 12 or db.iconWidthTarget > 50 then
-		db.iconWidthTarget = plugin.defaultDB.iconWidthTarget
-	end
-	if db.iconHeightTarget < 12 or db.iconHeightTarget > 50 then
-		db.iconHeightTarget = plugin.defaultDB.iconHeightTarget
-	end
-	if db.iconWidthOthers < 12 or db.iconWidthOthers > 50 then
-		db.iconWidthOthers = plugin.defaultDB.iconWidthOthers
-	end
-	if db.iconHeightOthers < 12 or db.iconHeightOthers > 50 then
-		db.iconHeightOthers = plugin.defaultDB.iconHeightOthers
-	end
-	if db.iconOffsetX < -100 or db.iconOffsetX > 100 then
-		db.iconOffsetX = plugin.defaultDB.iconOffsetX
-	end
-	if db.iconOffsetY < -100 or db.iconOffsetY > 100 then
-		db.iconOffsetY = plugin.defaultDB.iconOffsetY
-	end
-	if db.iconOffsetXTarget < -100 or db.iconOffsetXTarget > 100 then
-		db.iconOffsetXTarget = plugin.defaultDB.iconOffsetXTarget
-	end
-	if db.iconOffsetYTarget < -100 or db.iconOffsetYTarget > 100 then
-		db.iconOffsetYTarget = plugin.defaultDB.iconOffsetYTarget
-	end
-	if not media:IsValid(FONT, db.iconFontName) then
-		db.iconFontName = plugin.defaultDB.iconFontName
-	end
-	if db.iconFontSize < 6 or db.iconFontSize > 200 then
-		db.iconFontSize = plugin.defaultDB.iconFontSize
-	end
-	for i = 1, 4 do
-		local n = db.iconFontColor[i]
-		if type(n) ~= "number" or n < 0 or n > 1 then
-			db.iconFontColor = plugin.defaultDB.iconFontColor
-			break -- If 1 entry is bad, reset the whole table
-		end
-	end
-	if db.iconFontOutline ~= "NONE" and db.iconFontOutline ~= "OUTLINE" and db.iconFontOutline ~= "THICKOUTLINE" then
-		db.iconFontOutline = plugin.defaultDB.iconFontOutline
-	end
-	if not glowValues[db.iconExpireGlowType] then
-		db.iconExpireGlowType = plugin.defaultDB.iconExpireGlowType
-	end
-	if db.iconGlowFrequency < -2 or db.iconGlowFrequency > 2 then
-		db.iconGlowFrequency = plugin.defaultDB.iconGlowFrequency
-	end
-	if db.iconGlowPixelLines < 1 or db.iconGlowPixelLines > 15 then
-		db.iconGlowPixelLines = plugin.defaultDB.iconGlowPixelLines
-	end
-	if db.iconGlowPixelLength < 1 or db.iconGlowPixelLength > 20 then
-		db.iconGlowPixelLength = plugin.defaultDB.iconGlowPixelLength
-	end
-	if db.iconGlowPixelThickness < 1 or db.iconGlowPixelThickness > 5 then
-		db.iconGlowPixelThickness = plugin.defaultDB.iconGlowPixelThickness
-	end
-	if db.iconGlowAutoCastParticles < 1 or db.iconGlowAutoCastParticles > 15 then
-		db.iconGlowAutoCastParticles = plugin.defaultDB.iconGlowAutoCastParticles
-	end
-	if db.iconGlowAutoCastScale < 0.5 or db.iconGlowAutoCastScale > 3 then
-		db.iconGlowAutoCastScale = plugin.defaultDB.iconGlowAutoCastScale
-	end
-	if db.iconGlowProcAnimDuration < 0.1 or db.iconGlowProcAnimDuration > 3 then
-		db.iconGlowProcAnimDuration = plugin.defaultDB.iconGlowProcAnimDuration
-	end
-	if db.iconGlowTimeLeft < 0 or db.iconGlowTimeLeft > 3 then
-		db.iconGlowTimeLeft = plugin.defaultDB.iconGlowTimeLeft
-	end
-	if db.iconZoom < 0 or db.iconZoom > 0.5 then
-		db.iconZoom = plugin.defaultDB.iconZoom
-	end
-	for i = 1, 4 do
-		local n = db.iconColor[i]
-		if type(n) ~= "number" or n < 0 or n > 1 then
-			db.iconColor = plugin.defaultDB.iconColor
-			break -- If 1 entry is bad, reset the whole table
-		end
-	end
-	if db.iconColor[4] < 0.3 then -- Limit lowest alpha value
-		db.iconColor = plugin.defaultDB.iconColor
-	end
-	for i = 1, 4 do
-		local n = db.iconGlowColor[i]
-		if type(n) ~= "number" or n < 0 or n > 1 then
-			db.iconGlowColor = plugin.defaultDB.iconGlowColor
-			break -- If 1 entry is bad, reset the whole table
-		end
-	end
-	if db.iconBorderSize < 1 or db.iconBorderSize > 5 then
-		db.iconBorderSize = plugin.defaultDB.iconBorderSize
-	end
-	for i = 1, 4 do
-		local n = db.iconBorderColor[i]
-		if type(n) ~= "number" or n < 0 or n > 1 then
-			db.iconBorderColor = plugin.defaultDB.iconBorderColor
-			break -- If 1 entry is bad, reset the whole table
-		end
-	end
+	function updateProfile()
+		db = plugin.db.profile
 
-	if not validGrowDirections[db.textGrowDirection] then
-		db.textGrowDirection = plugin.defaultDB.textGrowDirection
-	end
-	if not validFramePoints[db.textGrowDirectionStart] then
-		db.textGrowDirectionStart = plugin.defaultDB.textGrowDirectionStart
-	end
-	if db.textSpacing < 0 or db.textSpacing > 20 then
-		db.textSpacing = plugin.defaultDB.textSpacing
-	end
-	if db.textOffsetX < -150 or db.textOffsetX > 150 then
-		db.textOffsetX = plugin.defaultDB.textOffsetX
-	end
-	if db.textOffsetY < -150 or db.textOffsetY > 150 then
-		db.textOffsetY = plugin.defaultDB.textOffsetY
-	end
-	if not media:IsValid(FONT, db.textFontName) then
-		db.textFontName = plugin:GetDefaultFont()
-	end
-	if db.textFontSize < 10 or db.textFontSize > 200 then
-		db.textFontSize = plugin.defaultDB.textFontSize
-	end
-	for i = 1, 4 do
-		local n = db.textFontColor[i]
-		if type(n) ~= "number" or n < 0 or n > 1 then
-			db.textFontColor = plugin.defaultDB.textFontColor
-			break -- If 1 entry is bad, reset the whole table
+		for k, v in next, db do
+			local defaultType = type(plugin.defaultDB[k])
+			if defaultType == "nil" then
+				db[k] = nil
+			elseif type(v) ~= defaultType then
+				db[k] = plugin.defaultDB[k]
+			end
 		end
-	end
-	if db.textFontColor[4] < 0.3 then -- Limit lowest alpha value
-		db.textFontColor = plugin.defaultDB.textFontColor
-	end
-	if db.textOutline ~= "NONE" and db.textOutline ~= "OUTLINE" and db.textOutline ~= "THICKOUTLINE" then
-		db.textOutline = plugin.defaultDB.textOutline
+
+		if not validGrowDirections[db.iconGrowDirection] then
+			db.iconGrowDirection = plugin.defaultDB.iconGrowDirection
+		end
+		if not BigWigsAPI.IsValidFramePoint(db.iconGrowDirectionStart) then
+			db.iconGrowDirectionStart = plugin.defaultDB.iconGrowDirectionStart
+		end
+		if not validGrowDirections[db.iconGrowDirectionTarget] then
+			db.iconGrowDirectionTarget = plugin.defaultDB.iconGrowDirectionTarget
+		end
+		if not BigWigsAPI.IsValidFramePoint(db.iconGrowDirectionStartTarget) then
+			db.iconGrowDirectionStartTarget = plugin.defaultDB.iconGrowDirectionStartTarget
+		end
+		if db.iconSpacing < 0 or db.iconSpacing > 20 then
+			db.iconSpacing = plugin.defaultDB.iconSpacing
+		end
+		if db.iconSpacingTarget < 0 or db.iconSpacingTarget > 20 then
+			db.iconSpacingTarget = plugin.defaultDB.iconSpacingTarget
+		end
+		if db.iconWidthTarget < 12 or db.iconWidthTarget > 50 then
+			db.iconWidthTarget = plugin.defaultDB.iconWidthTarget
+		end
+		if db.iconHeightTarget < 12 or db.iconHeightTarget > 50 then
+			db.iconHeightTarget = plugin.defaultDB.iconHeightTarget
+		end
+		if db.iconWidthOthers < 12 or db.iconWidthOthers > 50 then
+			db.iconWidthOthers = plugin.defaultDB.iconWidthOthers
+		end
+		if db.iconHeightOthers < 12 or db.iconHeightOthers > 50 then
+			db.iconHeightOthers = plugin.defaultDB.iconHeightOthers
+		end
+		if db.iconOffsetX < -100 or db.iconOffsetX > 100 then
+			db.iconOffsetX = plugin.defaultDB.iconOffsetX
+		end
+		if db.iconOffsetY < -100 or db.iconOffsetY > 100 then
+			db.iconOffsetY = plugin.defaultDB.iconOffsetY
+		end
+		if db.iconOffsetXTarget < -100 or db.iconOffsetXTarget > 100 then
+			db.iconOffsetXTarget = plugin.defaultDB.iconOffsetXTarget
+		end
+		if db.iconOffsetYTarget < -100 or db.iconOffsetYTarget > 100 then
+			db.iconOffsetYTarget = plugin.defaultDB.iconOffsetYTarget
+		end
+		if not LibSharedMedia:IsValid(FONT, db.iconFontName) then
+			db.iconFontName = plugin.defaultDB.iconFontName
+		end
+		if db.iconFontSize < 6 or db.iconFontSize > 200 then
+			db.iconFontSize = plugin.defaultDB.iconFontSize
+		end
+		ValidateColor(db.iconFontColor, plugin.defaultDB.iconFontColor, 0)
+		if db.iconFontOutline ~= "NONE" and db.iconFontOutline ~= "OUTLINE" and db.iconFontOutline ~= "THICKOUTLINE" then
+			db.iconFontOutline = plugin.defaultDB.iconFontOutline
+		end
+		if not glowValues[db.iconExpireGlowType] then
+			db.iconExpireGlowType = plugin.defaultDB.iconExpireGlowType
+		end
+		if db.iconGlowFrequency < -2 or db.iconGlowFrequency > 2 then
+			db.iconGlowFrequency = plugin.defaultDB.iconGlowFrequency
+		end
+		if db.iconGlowPixelLines < 1 or db.iconGlowPixelLines > 15 then
+			db.iconGlowPixelLines = plugin.defaultDB.iconGlowPixelLines
+		end
+		if db.iconGlowPixelLength < 1 or db.iconGlowPixelLength > 20 then
+			db.iconGlowPixelLength = plugin.defaultDB.iconGlowPixelLength
+		end
+		if db.iconGlowPixelThickness < 1 or db.iconGlowPixelThickness > 5 then
+			db.iconGlowPixelThickness = plugin.defaultDB.iconGlowPixelThickness
+		end
+		if db.iconGlowAutoCastParticles < 1 or db.iconGlowAutoCastParticles > 15 then
+			db.iconGlowAutoCastParticles = plugin.defaultDB.iconGlowAutoCastParticles
+		end
+		if db.iconGlowAutoCastScale < 0.5 or db.iconGlowAutoCastScale > 3 then
+			db.iconGlowAutoCastScale = plugin.defaultDB.iconGlowAutoCastScale
+		end
+		if db.iconGlowProcAnimDuration < 0.1 or db.iconGlowProcAnimDuration > 3 then
+			db.iconGlowProcAnimDuration = plugin.defaultDB.iconGlowProcAnimDuration
+		end
+		if db.iconGlowTimeLeft < 0 or db.iconGlowTimeLeft > 3 then
+			db.iconGlowTimeLeft = plugin.defaultDB.iconGlowTimeLeft
+		end
+		if db.iconGlowOffsetX < -32 or db.iconGlowOffsetX > 32 then
+			db.iconGlowOffsetX = plugin.defaultDB.iconGlowOffsetX
+		end
+		if db.iconGlowOffsetY < -32 or db.iconGlowOffsetY > 32 then
+			db.iconGlowOffsetY = plugin.defaultDB.iconGlowOffsetY
+		end
+		if db.iconZoom < 0 or db.iconZoom > 0.5 then
+			db.iconZoom = plugin.defaultDB.iconZoom
+		end
+		ValidateColor(db.iconColor, plugin.defaultDB.iconColor, 0.3)
+		ValidateColor(db.iconGlowColor, plugin.defaultDB.iconGlowColor, 0)
+		if not LibSharedMedia:IsValid("border", db.iconBorderName) then -- If the border is suddenly invalid then reset the size and offset also
+			db.iconBorderName = plugin.defaultDB.iconBorderName
+			db.iconBorderSize = plugin.defaultDB.iconBorderSize
+			db.iconBorderOffset = plugin.defaultDB.iconBorderOffset
+		end
+		if db.iconBorderSize < 1 or db.iconBorderSize > 32 then
+			db.iconBorderSize = plugin.defaultDB.iconBorderSize
+		end
+		if db.iconBorderOffset < 0 or db.iconBorderOffset > 32 then
+			db.iconBorderOffset = plugin.defaultDB.iconBorderOffset
+		end
+		ValidateColor(db.iconBorderColor, plugin.defaultDB.iconBorderColor, 0)
+		if db.iconFrameStrata ~= "MEDIUM" and db.iconFrameStrata ~= "LOW" then
+			db.iconFrameStrata = plugin.defaultDB.iconFrameStrata
+		end
+		if db.iconEmphasizeTime < 0 or db.iconEmphasizeTime > 12 then
+			db.iconEmphasizeTime = plugin.defaultDB.iconEmphasizeTime
+		end
+		ValidateColor(db.iconEmphasizeFontColor, plugin.defaultDB.iconEmphasizeFontColor, 0)
+		if db.iconEmphasizeFontSize < 6 or db.iconEmphasizeFontSize > 200 then
+			db.iconEmphasizeFontSize = plugin.defaultDB.iconEmphasizeFontSize
+		end
+
+		if not validGrowDirections[db.textGrowDirection] then
+			db.textGrowDirection = plugin.defaultDB.textGrowDirection
+		end
+		if not BigWigsAPI.IsValidFramePoint(db.textGrowDirectionStart) then
+			db.textGrowDirectionStart = plugin.defaultDB.textGrowDirectionStart
+		end
+		if db.textSpacing < 0 or db.textSpacing > 20 then
+			db.textSpacing = plugin.defaultDB.textSpacing
+		end
+		if db.textOffsetX < -150 or db.textOffsetX > 150 then
+			db.textOffsetX = plugin.defaultDB.textOffsetX
+		end
+		if db.textOffsetY < -150 or db.textOffsetY > 150 then
+			db.textOffsetY = plugin.defaultDB.textOffsetY
+		end
+		if not LibSharedMedia:IsValid(FONT, db.textFontName) then
+			db.textFontName = plugin.defaultDB.textFontName
+		end
+		if db.textFontSize < 10 or db.textFontSize > 200 then
+			db.textFontSize = plugin.defaultDB.textFontSize
+		end
+		ValidateColor(db.textFontColor, plugin.defaultDB.textFontColor, 0.3)
+		if db.textOutline ~= "NONE" and db.textOutline ~= "OUTLINE" and db.textOutline ~= "THICKOUTLINE" then
+			db.textOutline = plugin.defaultDB.textOutline
+		end
+
+		iconBorderTable = {
+			edgeFile = LibSharedMedia:Fetch("border", db.iconBorderName),
+			edgeSize = db.iconBorderSize,
+		}
 	end
 end
 
 local function setDefaults(options)
-	local defaults = options
-	for k, value in next, defaults do
-		db[k] = value
+	for k in next, options do
+		db[k] = nil
 	end
+	plugin.db:RegisterDefaults(plugin.db.defaults)
 	updateProfile()
 end
 
@@ -369,7 +380,7 @@ local function getTextFrame()
 		textFrame:SetPoint("CENTER")
 		textFrame:SetFrameStrata("MEDIUM")
 		textFrame:SetFixedFrameStrata(true)
-		textFrame:SetFrameLevel(5600)
+		textFrame:SetFrameLevel(6200)
 		textFrame:SetFixedFrameLevel(true)
 
 		local fontString = textFrame:CreateFontString()
@@ -393,7 +404,7 @@ local function getTextFrame()
 		elseif db.textOutline ~= "NONE" then
 			flags = db.textOutline
 		end
-		self.fontString:SetFont(media:Fetch(FONT, db.textFontName), db.textFontSize, flags)
+		self.fontString:SetFont(LibSharedMedia:Fetch(FONT, db.textFontName), db.textFontSize, flags)
 		self.fontString:SetTextColor(db.textFontColor[1], db.textFontColor[2], db.textFontColor[3], db.textFontColor[4])
 		local w, h = self.fontString:GetWidth(), self.fontString:GetHeight()
 		self:SetSize(w, h)
@@ -453,6 +464,18 @@ local function iconLoop(updater)
 	local remaining = math.floor(iconFrame:GetRemaining() * 10 + 0.5) / 10
 	local timeToDisplay = math.ceil(remaining)
 	if timeToDisplay > 0 then
+		if timeToDisplay == db.iconEmphasizeTime then
+			local flags = nil
+			if db.iconFontMonochrome and db.iconFontOutline ~= "NONE" then
+				flags = "MONOCHROME," .. db.iconFontOutline
+			elseif db.iconFontMonochrome then
+				flags = "MONOCHROME"
+			elseif db.iconFontOutline ~= "NONE" then
+				flags = db.iconFontOutline
+			end
+			iconFrame.countdownNumber:SetFont(LibSharedMedia:Fetch(FONT, db.iconFontName), db.iconEmphasizeFontSize, flags)
+			iconFrame.countdownNumber:SetTextColor(db.iconEmphasizeFontColor[1], db.iconEmphasizeFontColor[2], db.iconEmphasizeFontColor[3], db.iconEmphasizeFontColor[4])
+		end
 		if db.iconCooldownNumbers then
 			iconFrame.countdownNumber:SetText(timeToDisplay)
 		end
@@ -468,20 +491,11 @@ local function iconLoop(updater)
 	end
 end
 
-local function GetBorderBackdrop(size)
-	local borderBackdrop = {
-		edgeFile = "Interface\\Buttons\\WHITE8X8",
-		edgeSize = size,
-		insets = { left = 0, right = 0, top = 0, bottom = 0 }
-	}
-	return borderBackdrop
-end
-
 local function getGlowSettings(glowType)
 	if glowType == "pixel" then
-		return {db.iconGlowColor, db.iconGlowPixelLines, db.iconGlowFrequency, db.iconGlowPixelLength, db.iconGlowPixelThickness}
+		return {db.iconGlowColor, db.iconGlowPixelLines, db.iconGlowFrequency, db.iconGlowPixelLength, db.iconGlowPixelThickness, db.iconGlowOffsetX, db.iconGlowOffsetY}
 	elseif glowType == "autocast" then
-		return {db.iconGlowColor, db.iconGlowAutoCastParticles, db.iconGlowFrequency, db.iconGlowAutoCastScale}
+		return {db.iconGlowColor, db.iconGlowAutoCastParticles, db.iconGlowFrequency, db.iconGlowAutoCastScale, db.iconGlowOffsetX, db.iconGlowOffsetY}
 	elseif glowType == "proc" then
 		return {{color = db.iconGlowColor, startAnim = db.iconGlowProcStartAnim, duration = db.iconGlowProcAnimDuration}}
 	elseif glowType == "buttoncast" then
@@ -498,8 +512,7 @@ local function getIconFrame()
 		iconFrame = CreateFrame("Frame", nil, UIParent)
 		iconFrame:SetPoint("CENTER")
 		iconFrame:SetFrameStrata("MEDIUM")
-		iconFrame:SetFixedFrameStrata(true)
-		iconFrame:SetFrameLevel(5500)
+		iconFrame:SetFrameLevel(6000)
 		iconFrame:SetClampedToScreen(true)
 		iconFrame:SetSize(db.iconWidthOthers, db.iconHeightOthers)
 
@@ -527,6 +540,7 @@ local function getIconFrame()
 		iconFrame.countdownNumber = countdownNumber
 
 		local border = CreateFrame("Frame", nil, iconFrame, "BackdropTemplate")
+		border:SetFrameLevel(border:GetFrameLevel()+1) -- Show the border above the cooldown swipe
 		border:SetPoint("TOPLEFT", iconFrame, "TOPLEFT")
 		border:SetPoint("BOTTOMRIGHT", iconFrame, "BOTTOMRIGHT")
 		border:Hide()
@@ -568,10 +582,16 @@ local function getIconFrame()
 				elseif db.iconFontOutline ~= "NONE" then
 					flags = db.iconFontOutline
 				end
-				self.countdownNumber:SetFont(media:Fetch(FONT, db.iconFontName), db.iconFontSize, flags)
-				self.countdownNumber:SetTextColor(db.iconFontColor[1], db.iconFontColor[2], db.iconFontColor[3], db.iconFontColor[4])
 
 				local timeToDisplay = math.ceil(remaining)
+				if timeToDisplay <= db.iconEmphasizeTime then
+					self.countdownNumber:SetFont(LibSharedMedia:Fetch(FONT, db.iconFontName), db.iconEmphasizeFontSize, flags)
+					self.countdownNumber:SetTextColor(db.iconEmphasizeFontColor[1], db.iconEmphasizeFontColor[2], db.iconEmphasizeFontColor[3], db.iconEmphasizeFontColor[4])
+				else
+					self.countdownNumber:SetFont(LibSharedMedia:Fetch(FONT, db.iconFontName), db.iconFontSize, flags)
+					self.countdownNumber:SetTextColor(db.iconFontColor[1], db.iconFontColor[2], db.iconFontColor[3], db.iconFontColor[4])
+				end
+
 				self.countdownNumber:SetText(timeToDisplay)
 				self.countdownNumber:Show()
 			end
@@ -620,7 +640,9 @@ local function getIconFrame()
 
 	function iconFrame:ShowBorder(show, color)
 		if show then
-			self.border:SetBackdrop(GetBorderBackdrop(db.iconBorderSize))
+			self.border:SetBackdrop(iconBorderTable)
+			self.border:SetPoint("TOPLEFT", iconFrame, "TOPLEFT", -db.iconBorderOffset, db.iconBorderOffset)
+			self.border:SetPoint("BOTTOMRIGHT", iconFrame, "BOTTOMRIGHT", db.iconBorderOffset, -db.iconBorderOffset)
 			self.border:SetBackdropBorderColor(color[1], color[2], color[3], color[4])
 			self.border:Show()
 		else
@@ -730,7 +752,7 @@ do
 			db[info[#info]] = value
 			updateProfile()
 		end,
-		order = 2,
+		order = 3,
 		args = {
 			testIconButton = {
 				type = "execute",
@@ -806,7 +828,7 @@ do
 							},
 							iconGrowDirectionStartTarget = {
 								type = "select",
-								values = validFramePoints,
+								values = BigWigsAPI.GetFramePointList(),
 								name = L.growStartPosition,
 								desc = L.growStartPositionDesc,
 								order = 2,
@@ -863,7 +885,7 @@ do
 							},
 							iconGrowDirectionStart = {
 								type = "select",
-								values = validFramePoints,
+								values = BigWigsAPI.GetFramePointList(),
 								name = L.growStartPosition,
 								desc = L.growStartPositionDesc,
 								order = 9,
@@ -1040,15 +1062,55 @@ do
 								name = L.borderSize,
 								order = 7,
 								min = 1,
-								max = 5,
+								max = 32,
 								step = 1,
+								width = 1,
+								set = function(_, value)
+									db.iconBorderSize = value
+									iconBorderTable = {
+										edgeFile = LibSharedMedia:Fetch("border", db.iconBorderName),
+										edgeSize = value,
+									}
+									resetNameplates()
+								end,
+								disabled = function() return not db.iconBorder end,
+							},
+							iconBorderOffset = {
+								type = "range",
+								name = L.borderOffset,
+								order = 8,
+								min = 0,
+								max = 32,
+								step = 1,
+								width = 1,
+								disabled = function() return not db.iconBorder end,
+							},
+							iconBorderName = {
+								type = "select",
+								name = L.borderName,
+								order = 9,
+								values = LibSharedMedia:List("border"),
+								get = function()
+									for i, v in next, LibSharedMedia:List("border") do
+										if v == db.iconBorderName then return i end
+									end
+								end,
+								set = function(_, value)
+									local list = LibSharedMedia:List("border")
+									db.iconBorderName = list[value]
+									iconBorderTable = {
+										edgeFile = LibSharedMedia:Fetch("border", db.iconBorderName),
+										edgeSize = db.iconBorderSize,
+									}
+									resetNameplates()
+								end,
 								width = 1,
 								disabled = function() return not db.iconBorder end,
 							},
 							resetHeader = {
 								type = "header",
 								name = "",
-								order = 8,
+								order = 10,
 							},
 							reset = {
 								type = "execute",
@@ -1061,7 +1123,7 @@ do
 										plugin:NAME_PLATE_UNIT_ADDED(nil, "target")
 									end
 								end,
-								order = 9,
+								order = 11,
 							},
 						},
 					},
@@ -1100,15 +1162,15 @@ do
 								type = "select",
 								name = L.font,
 								order = 5,
-								values = media:List(FONT),
+								values = LibSharedMedia:List(FONT),
 								itemControl = "DDI-Font",
 								get = function()
-									for i, v in next, media:List(FONT) do
+									for i, v in next, LibSharedMedia:List(FONT) do
 										if v == db.iconFontName then return i end
 									end
 								end,
 								set = function(_, value)
-									local list = media:List(FONT)
+									local list = LibSharedMedia:List(FONT)
 									db.iconFontName = list[value]
 									resetNameplates()
 								end,
@@ -1154,6 +1216,50 @@ do
 								desc = L.monochromeDesc,
 								order = 9,
 								disabled = checkCooldownTimerDisabled,
+							},
+							emphasizeHeader = {
+								type = "header",
+								name = L.emphasize,
+								order = 10,
+							},
+							emphasizeHeading = {
+								type = "description",
+								name = L.cooldownEmphasizeHeader,
+								order = 11,
+								width = "full",
+								fontSize = "medium",
+							},
+							iconEmphasizeTime = {
+								type = "range",
+								name = L.emphasizeAt,
+								order = 12,
+								min = 0,
+								max = 12,
+								step = 1,
+								width = "full",
+								disabled = checkCooldownTimerDisabled,
+							},
+							iconEmphasizeFontColor = {
+								type = "color",
+								name = L.fontColor,
+								hasAlpha = true,
+								get = function()
+									return db.iconEmphasizeFontColor[1], db.iconEmphasizeFontColor[2], db.iconEmphasizeFontColor[3], db.iconEmphasizeFontColor[4]
+								end,
+								set = function(_, r, g, b, a)
+									db.iconEmphasizeFontColor = {r, g, b, a}
+									resetNameplates()
+								end,
+								order = 13,
+								disabled = function() return db.iconEmphasizeTime == 0 or not db.iconCooldownNumbers end,
+							},
+							iconEmphasizeFontSize = {
+								type = "range",
+								name = L.fontSize,
+								desc = L.fontSizeDesc,
+								order = 14,
+								softMax = 100, max = 200, min = 6, step = 1,
+								disabled = function() return db.iconEmphasizeTime == 0 or not db.iconCooldownNumbers end,
 							},
 						},
 					},
@@ -1246,7 +1352,7 @@ do
 								min = 0.5,
 								max = 3,
 								step = 0.05,
-								width = 1.5,
+								width = 2,
 								isPercent = true,
 								disabled = function() return not db.iconExpireGlow end,
 								hidden = function() return db.iconExpireGlowType ~= "autocast" end,
@@ -1283,15 +1389,38 @@ do
 								disabled = function() return not db.iconExpireGlow end,
 								hidden = function() return db.iconExpireGlowType ~= "pixel" end,
 							},
+							iconGlowOffsetX = {
+								type = "range",
+								name = L.offsetX,
+								order = 12,
+								min = -32,
+								max = 32,
+								step = 1,
+								width = 1.5,
+								disabled = function() return not db.iconExpireGlow end,
+								hidden = function() return db.iconExpireGlowType == "buttoncast" or db.iconExpireGlowType == "proc" end,
+							},
+							iconGlowOffsetY = {
+								type = "range",
+								name = L.offsetY,
+								order = 13,
+								min = -32,
+								max = 32,
+								step = 1,
+								width = 1.5,
+								disabled = function() return not db.iconExpireGlow end,
+								hidden = function() return db.iconExpireGlowType == "buttoncast" or db.iconExpireGlowType == "proc" end,
+							},
 							iconGlowTimeLeft = {
 								type = "range",
 								name = L.glowAt,
 								desc = L.glowAt_desc,
-								order = 12,
+								order = 14,
 								min = 0,
 								max = 3,
 								step = 1,
 								width = 2,
+								disabled = function() return not db.iconExpireGlow end,
 							},
 						},
 					},
@@ -1302,23 +1431,66 @@ do
 						args = {
 							iconFrameStrata = {
 								type = "select",
-								values = {MEDIUM="MEDIUM"},
-								name = "Icon Strata (NYI)",
-								get = function() return "MEDIUM" end,
+								values = {MEDIUM=L.medium, LOW=L.low},
+								name = L.drawStrata,
 								order = 1,
-								width = 2,
-								disabled = true,
+								width = 1,
 							},
-							iconFrameLevel = {
-								type = "range",
-								name = "Icon Level (NYI)",
-								get = function() return 5500 end,
+							heading = {
+								type = "description",
+								name = function()
+									if not BigWigsLoader.db.profile.bossModNameplatesDisabled then
+										return L.nameplateOptInHeaderOff
+									else
+										return L.nameplateOptInHeaderOn
+									end
+								end,
 								order = 2,
-								min = 0,
-								max = 10000,
-								step = 1,
-								width = 2,
-								disabled = true,
+								width = "full",
+								fontSize = "medium",
+							},
+							optintoggle = {
+								type = "toggle",
+								name = L.nameplateOptInTitle,
+								order = 3,
+								width = "full",
+								get = function()
+									return BigWigsLoader.db.profile.bossModNameplatesDisabled
+								end,
+								set = function(_, value)
+									local profileName = BigWigsLoader.db:GetCurrentProfile()
+									if type(profileName) == "string" and type(BigWigs3DB.namespaces) == "table" then
+										if value then
+											for moduleName, moduleSettings in next, BigWigs3DB.namespaces do
+												if type(moduleName) == "string" and type(moduleSettings) == "table" and strfind(moduleName, "BigWigs_Bosses", nil, true) and type(BigWigs3DB.namespaces[moduleName].profiles) == "table" and type(BigWigs3DB.namespaces[moduleName].profiles[profileName]) == "table" then
+													for optionKey, optionValue in next, BigWigs3DB.namespaces[moduleName].profiles[profileName] do
+														if type(optionValue) == "number" and optionValue > 10 and bit.band(optionValue, BigWigs.C.NAMEPLATE) == BigWigs.C.NAMEPLATE then
+															BigWigs3DB.namespaces[moduleName].profiles[profileName][optionKey] = optionValue - BigWigs.C.NAMEPLATE
+														end
+													end
+												end
+											end
+											BigWigsLoader.db.profile.bossModNameplatesDisabled = true
+										else
+											for moduleName, moduleSettings in next, BigWigs3DB.namespaces do
+												if type(moduleName) == "string" and type(moduleSettings) == "table" and strfind(moduleName, "BigWigs_Bosses", nil, true) and type(BigWigs3DB.namespaces[moduleName].profiles) == "table" and type(BigWigs3DB.namespaces[moduleName].profiles[profileName]) == "table" then
+													for optionKey, optionValue in next, BigWigs3DB.namespaces[moduleName].profiles[profileName] do
+														if type(optionValue) == "number" and optionValue > 10 and bit.band(optionValue, BigWigs.C.NAMEPLATE) ~= BigWigs.C.NAMEPLATE then
+															BigWigs3DB.namespaces[moduleName].profiles[profileName][optionKey] = optionValue + BigWigs.C.NAMEPLATE
+														end
+													end
+												end
+											end
+											BigWigsLoader.db.profile.bossModNameplatesDisabled = false
+										end
+										C_UI.Reload()
+									end
+								end,
+								confirm = function(_, value)
+									if value then
+										return L.nameplateOptInWarning
+									end
+								end,
 							},
 						},
 					},
@@ -1341,7 +1513,7 @@ do
 					},
 					textGrowDirectionStart = {
 						type = "select",
-						values = validFramePoints,
+						values = BigWigsAPI.GetFramePointList(),
 						name = L.growStartPosition,
 						desc = L.growStartPositionDesc,
 						order = 2,
@@ -1394,15 +1566,15 @@ do
 						type = "select",
 						name = L.font,
 						order = 22,
-						values = media:List(FONT),
+						values = LibSharedMedia:List(FONT),
 						itemControl = "DDI-Font",
 						get = function()
-							for i, v in next, media:List(FONT) do
+							for i, v in next, LibSharedMedia:List(FONT) do
 								if v == db.textFontName then return i end
 							end
 						end,
 						set = function(_, value)
-							local list = media:List(FONT)
+							local list = LibSharedMedia:List(FONT)
 							db.textFontName = list[value]
 							resetNameplates()
 						end,
@@ -1761,12 +1933,13 @@ end
 local function createNameplateIcon(module, guid, key, length, icon)
 	local iconFrame = getIconFrame()
 	local target = module:UnitGUID("target")
+	iconFrame:SetFrameStrata(db.iconFrameStrata)
 	if guid == target then
 		iconFrame:SetSize(db.iconWidthTarget, db.iconHeightTarget)
-		iconFrame:SetFrameLevel(5555)
+		iconFrame:SetFrameLevel(6100)
 	else
 		iconFrame:SetSize(db.iconWidthOthers, db.iconHeightOthers)
-		iconFrame:SetFrameLevel(5500)
+		iconFrame:SetFrameLevel(6000)
 	end
 	iconFrame:Set("bigwigs:key", key)
 	iconFrame:Set("bigwigs:unitGUID", guid)
@@ -1952,7 +2125,7 @@ do
 			for _, tbl in next, nameplateIcons[guid] do
 				if tbl.nameplateFrame then
 					tbl.nameplateFrame:SetSize(db.iconWidthTarget, db.iconHeightTarget)
-					tbl.nameplateFrame:SetFrameLevel(5555)
+					tbl.nameplateFrame:SetFrameLevel(6100)
 				end
 			end
 			rearrangeNameplateIcons(guid)
@@ -1961,7 +2134,7 @@ do
 			for _, tbl in next, nameplateIcons[prevTarget] do
 				if tbl.nameplateFrame then
 					tbl.nameplateFrame:SetSize(db.iconWidthOthers, db.iconHeightOthers)
-					tbl.nameplateFrame:SetFrameLevel(5500)
+					tbl.nameplateFrame:SetFrameLevel(6000)
 				end
 			end
 			rearrangeNameplateIcons(prevTarget)

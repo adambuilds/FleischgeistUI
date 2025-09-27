@@ -864,10 +864,6 @@ L["STRING_OPTIONS_MPLUS_BOSSNEWCOMBAT"] = "Neuer Kampf bei Boss Pull"
 L["STRING_OPTIONS_MPLUS_BOSSNEWCOMBAT_DESC"] = "If a boss is pulled while in combat, this option closes the current combat encounter and initiates a new one for the boss."
 L["STRING_OPTIONS_MPLUS_DPS_ANCHOR"] = "DPS-Berechnung für das gesamte Segment"
 --[[Translation missing --]]
-L["STRING_OPTIONS_MPLUS_MAKEOVERALL"] = "Make Overall Segment"
---[[Translation missing --]]
-L["STRING_OPTIONS_MPLUS_MAKEOVERALL_DESC"] = "After the run is completed, this option creates a new segment containing all combat data from the run."
---[[Translation missing --]]
 L["STRING_OPTIONS_MPLUS_MERGETRASH"] = "Merge Trash"
 --[[Translation missing --]]
 L["STRING_OPTIONS_MPLUS_PANELS_ANCHOR"] = "Panels"
@@ -1480,6 +1476,8 @@ L["STRING_QUERY_INSPECT_REFRESH"] = "Aktualisierung benötigt"
 L["STRING_RAID_WIDE"] = "[*] Schlachtzugsweite Abklingzeiten"
 L["STRING_RAIDCHECK_PLUGIN_DESC"] = "Zeigt innerhalb von Schlachtzugsinstanzen ein Symbol auf der Details!-Titelleiste, das Fläschchen-, Essen- und Voraustrank-Nutzung anzeigt."
 L["STRING_RAIDCHECK_PLUGIN_NAME"] = "Raid-Nachprüfung"
+--[[Translation missing --]]
+L["STRING_RECENT_PLAYERS"] = "Recent Players:"
 L["STRING_REPORT"] = "für"
 L["STRING_REPORT_BUTTON_TOOLTIP"] = "Klicke, um den Berichtsdialog zu öffnen"
 L["STRING_REPORT_FIGHT"] = "Kampf"

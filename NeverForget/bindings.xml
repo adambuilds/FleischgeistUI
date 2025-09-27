@@ -1,0 +1,5 @@
+<Bindings>
+  <Binding name="TOGGLE_WINDOW" header="NEVERFORGET" category="AddOns">
+    NeverForget_ToggleWindow();
+  </Binding>
+</Bindings>

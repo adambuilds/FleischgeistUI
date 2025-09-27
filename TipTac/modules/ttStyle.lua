@@ -29,6 +29,9 @@ local TT_Unknown = UNKNOWN; -- "Unknown"
 local TT_UnknownObject = UNKNOWNOBJECT; -- "Unknown"
 local TT_Targeting = BINDING_HEADER_TARGETING;	-- "Targeting"
 local TT_TargetedBy = LibFroznFunctions:GetGlobalString("TIPTAC_TARGETED_BY") or "Targeted by"; -- "Targeted by"
+local TT_PlayerMap = BRAWL_TOOLTIP_MAP; -- "Map"
+local TT_PlayerZone = FRIENDS_LIST_ZONE; -- "Zone: "
+local TT_PlayerSubzone = LibFroznFunctions:GetGlobalString("TIPTAC_SUBZONE") or "Subzone"; -- "Subzone"
 local TT_MythicPlusDungeonScore = CHALLENGE_COMPLETE_DUNGEON_SCORE; -- "Mythic+ Rating: %s"
 local TT_Mount = LibFroznFunctions:GetGlobalString("RENOWN_REWARD_MOUNT_NAME_FORMAT") or "Mount: %s"; -- "Mount: %s"
 local TT_PlayerGuildMemberNote = GUILD .. " " .. LABEL_NOTE; -- "Guild" "Note"
@@ -67,6 +70,7 @@ local TT_COLOR = {
 		targetedBy = HIGHLIGHT_FONT_COLOR, -- white
 		guildRank = CreateColor(0.8, 0.8, 0.8, 1), -- light+ grey (QUEST_OBJECTIVE_FONT_COLOR)
 		unitSpeed = CreateColor(0.8, 0.8, 0.8, 1), -- light+ grey (QUEST_OBJECTIVE_FONT_COLOR)
+		mythicPlusPercentMaxCountEnemyForces = LIGHTYELLOW_FONT_COLOR,
 		mountName = HIGHLIGHT_FONT_COLOR, -- white
 		mountSpeed = LIGHTYELLOW_FONT_COLOR,
 		mountSource = LIGHTYELLOW_FONT_COLOR,
@@ -75,12 +79,6 @@ local TT_COLOR = {
 		tipTacDeveloperTipTac = EPIC_PURPLE_COLOR
 	}
 };
-
-local TT_COLOR_TEXT = HIGHLIGHT_FONT_COLOR; -- white
-local TT_COLOR_TEXT_TARGETING = CreateColor(0.8, 0.8, 0.8, 1); -- light+ grey (QUEST_OBJECTIVE_FONT_COLOR)
-local TT_COLOR_TEXT_TARGETED_BY = CreateColor(0.8, 0.8, 0.8, 1); -- light+ grey (QUEST_OBJECTIVE_FONT_COLOR)
-local TT_COLOR_TEXT_GUILD_RANK = CreateColor(0.8, 0.8, 0.8, 1); -- light+ grey (QUEST_OBJECTIVE_FONT_COLOR)
-local TT_COLOR_TEXT_UNIT_SPEED = CreateColor(0.8, 0.8, 0.8, 1); -- light+ grey (QUEST_OBJECTIVE_FONT_COLOR)
 
 --------------------------------------------------------------------------------------------------------
 --                                         Style Unit Tooltip                                         --
@@ -393,6 +391,55 @@ function ttStyle:GeneratePlayerLines(tip, currentDisplayParams, unitRecord, firs
 			lineName:Push(HIGHLIGHT_FONT_COLOR:WrapTextInColorCode(status));
 		end
 	end
+	-- map, zone and subzone
+	if (cfg.showPlayerLocation ~= "none") then
+		-- determine map, zone and subzone text
+		local mapText, zoneText, subzoneText;
+		
+		if (unitRecord.map) and (LibFroznFunctions:ExistsInTable(cfg.showPlayerLocation, { "mapAndZoneAndSubzone", "mapAndZone", "map" })) then
+			mapText = unitRecord.map;
+		end
+		
+		if (not unitRecord.isSelf) and (cfg.showPlayerLocationOnlyForeignMap) then
+			local playerUnitRecord = LibFroznFunctions:GetUnitRecordFromCache("player");
+			
+			if (playerUnitRecord) and (mapText == playerUnitRecord.map) then
+				mapText = nil;
+			end
+		end
+		
+		if (unitRecord.zone) and (LibFroznFunctions:ExistsInTable(cfg.showPlayerLocation, { "mapAndZoneAndSubzone", "mapAndZone", "zoneAndSubzone", "zone" })) then
+			zoneText = unitRecord.zone;
+			
+			if (unitRecord.subzone) and (LibFroznFunctions:ExistsInTable(cfg.showPlayerLocation, { "mapAndZoneAndSubzone", "zoneAndSubzone" })) then
+				subzoneText = unitRecord.subzone;
+			end
+		end
+		
+		-- add map, zone and subzone text
+		if (mapText) and (mapText ~= zoneText) then
+			if (lineInfo:GetCount() > 0) then
+				lineInfo:Push("\n");
+			end
+			
+			lineInfo:Push("|cffffd100");
+			lineInfo:Push(TT_PlayerMap .. ": " .. TT_COLOR.text.default:WrapTextInColorCode(mapText));
+		end
+		
+		if (zoneText) then
+			if (lineInfo:GetCount() > 0) then
+				lineInfo:Push("\n");
+			end
+			
+			lineInfo:Push("|cffffd100");
+			lineInfo:Push(TT_PlayerZone .. TT_COLOR.text.default:WrapTextInColorCode(zoneText));
+			
+			if (subzoneText) then
+				lineInfo:Push("\n");
+				lineInfo:Push(TT_PlayerSubzone .. ": " .. TT_COLOR.text.default:WrapTextInColorCode(subzoneText));
+			end
+		end
+	end
 	-- guild
 	local guildName, guildRankName, guildRankIndex, guildRealm = GetGuildInfo(unitRecord.id);
 	if (guildName) then
@@ -509,6 +556,9 @@ function ttStyle:GenerateNpcLines(tip, currentDisplayParams, unitRecord, first)
 end
 
 -- Modify Tooltip Lines (name + info)
+local mapChallengeModeIDToDungeonIndexLookup = {};
+local npcIDToEnemyIdxLookup = {};
+
 function ttStyle:ModifyUnitTooltip(tip, currentDisplayParams, unitRecord, first)
 	-- obtain unit properties
 	unitRecord.reactionColor = CreateColor(unpack(cfg["colorReactText" .. unitRecord.reactionIndex]));
@@ -585,26 +635,104 @@ function ttStyle:ModifyUnitTooltip(tip, currentDisplayParams, unitRecord, first)
 				end
 			end
 			
-			local mythicPlusText = LibFroznFunctions:CreatePushArray();
+			local mythicPlusDungeonScoreText = LibFroznFunctions:CreatePushArray();
 			if (cfg.mythicPlusDungeonScoreFormat == "highestSuccessfullRun") then
 				if (mythicPlusBestRunLevel) then
-					mythicPlusText:Push(TT_COLOR.text.default:WrapTextInColorCode("+" .. mythicPlusBestRunLevel));
+					mythicPlusDungeonScoreText:Push(TT_COLOR.text.default:WrapTextInColorCode("+" .. mythicPlusBestRunLevel));
 				end
 			else
 				if (mythicPlusDungeonScore > 0) then
 					local mythicPlusDungeonScoreColor = (C_ChallengeMode.GetDungeonScoreRarityColor(mythicPlusDungeonScore) or TT_COLOR.text.default);
-					mythicPlusText:Push(mythicPlusDungeonScoreColor:WrapTextInColorCode(mythicPlusDungeonScore));
+					mythicPlusDungeonScoreText:Push(mythicPlusDungeonScoreColor:WrapTextInColorCode(mythicPlusDungeonScore));
 				end
 			end
-			if (mythicPlusText:GetCount() > 0) then
+			if (mythicPlusDungeonScoreText:GetCount() > 0) then
 				if (lineInfo:GetCount() > 0) then
 					lineInfo:Push("\n");
 				end
 				lineInfo:Push("|cffffd100");
-				lineInfo:Push(TT_MythicPlusDungeonScore:format(mythicPlusText:Concat()));
+				lineInfo:Push(TT_MythicPlusDungeonScore:format(mythicPlusDungeonScoreText:Concat()));
 				
 				if (cfg.mythicPlusDungeonScoreFormat == "both") and (mythicPlusBestRunLevel) then
 					lineInfo:Push(" |cffffff99(+" .. mythicPlusBestRunLevel .. ")|r");
+				end
+			end
+		end
+	end
+
+	-- Mythic+ Forces from addon "Mythic Dungeon Tools" (MDT) for NPCs
+	if (MDT) and (unitRecord.isNPC) and (cfg.showMythicPlusForcesFromMDT) and (C_MythicPlus.IsMythicPlusActive()) and (UnitCanAttack("player", unitRecord.id)) then
+		local mapChallengeModeID = C_ChallengeMode.GetActiveChallengeMapID();
+		
+		if (mapChallengeModeID) then
+			local dungeonIndex = mapChallengeModeIDToDungeonIndexLookup[mapChallengeModeID];
+			
+			if (not dungeonIndex) then
+				for _dungeonIndex, mapInfo in pairs(MDT.mapInfo) do
+					if (mapInfo.mapID == mapChallengeModeID) then
+						dungeonIndex = _dungeonIndex;
+						mapChallengeModeIDToDungeonIndexLookup[mapChallengeModeID] = dungeonIndex;
+						break;
+					end
+				end
+			end
+			
+			if (dungeonIndex) then
+				local dungeonEnemies = MDT.dungeonEnemies[dungeonIndex];
+				
+				if (dungeonEnemies) then
+					local enemyIdx = (npcIDToEnemyIdxLookup[mapChallengeModeID] and npcIDToEnemyIdxLookup[mapChallengeModeID][unitRecord.npcID]);
+					
+					if (not enemyIdx) then
+						for _enemyIdx, _dungeonEnemy in pairs(dungeonEnemies) do
+							if (_dungeonEnemy.id == unitRecord.npcID) then
+								enemyIdx = _enemyIdx;
+								
+								if (not npcIDToEnemyIdxLookup[mapChallengeModeID]) then
+									npcIDToEnemyIdxLookup[mapChallengeModeID] = {};
+								end
+								
+								npcIDToEnemyIdxLookup[mapChallengeModeID][unitRecord.npcID] = enemyIdx;
+								
+								break;
+							end
+						end
+					end
+					
+					if (enemyIdx) then
+						local dungeonEnemy = MDT.dungeonEnemies[dungeonIndex][enemyIdx];
+						
+						if (dungeonEnemy) then
+							local dungeonTotalCount = MDT.dungeonTotalCount[dungeonIndex];
+							local isTeeming = false;
+							local activeKeystoneLevel, activeAffixIDs, wasActiveKeystoneCharged = C_ChallengeMode.GetActiveKeystoneInfo();
+							
+							if (activeAffixIDs) then
+								for _, activeAffixID in ipairs(activeAffixIDs) do
+									if (activeAffixID == 5) then -- teeming
+										isTeeming = true;
+										break;
+									end
+								end
+							end
+							
+							local countEnemyForces = (isTeeming and dungeonEnemy.teemingCount or dungeonEnemy.count);
+							local maxCountEnemyForces = (dungeonTotalCount) and (isTeeming and dungeonTotalCount.teeming or dungeonTotalCount.normal);
+							
+							if (countEnemyForces) then
+								if (lineInfo:GetCount() > 0) then
+									lineInfo:Push("\n");
+								end
+								
+								lineInfo:Push("|cffffd100");
+								lineInfo:Push(MDT.L["Forces"] .. " (MDT): " .. TT_COLOR.text.default:WrapTextInColorCode(countEnemyForces));
+								
+								if (maxCountEnemyForces) then
+									lineInfo:Push(TT_COLOR.text.mythicPlusPercentMaxCountEnemyForces:WrapTextInColorCode(format(" (%.2f%%)", (countEnemyForces / maxCountEnemyForces) * 100)));
+								end
+							end
+						end
+					end
 				end
 			end
 		end

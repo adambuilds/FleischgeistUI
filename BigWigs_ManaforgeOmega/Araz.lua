@@ -347,10 +347,11 @@ function mod:SilencingTempest()
 	self:StopBar(CL.count:format(CL.pools, silencingTempestCount))
 	self:Message(1228188, "cyan", CL.count:format(CL.pools, silencingTempestCount))
 	silencingTempestCount = silencingTempestCount + 1
-	local cd = getTimers(1228188, silencingTempestCount)
-	if self:GetStage() == 2 and not self:Mythic() then -- XXX Yet to see
-		local stageTwoHeroicTimers = {12, 21, 23, 21}
-		cd = self:Easy() and 44 or stageTwoHeroicTimers[silencingTempestCount]
+	local cd
+	if self:GetStage() == 2 then
+		cd = not self:Heroic() and 44 or silencingTempestCount % 2 == 0 and 21.0 or 23.0
+	else
+		cd = getTimers(1228188, silencingTempestCount)
 	end
 	self:Bar(1228188, cd, CL.count:format(CL.pools, silencingTempestCount))
 end
@@ -358,9 +359,9 @@ end
 function mod:SilencingTempestApplied(args)
 	if self:Me(args.destGUID) then
 		self:PersonalMessage(1228188, nil, CL.pools)
-		self:PlaySound(1228188, "warning", nil, args.destName) -- move out
 		self:Say(1228188, CL.pools, nil, "Pools")
 		silencesOnMe = silencesOnMe + 1
+		self:PlaySound(1228188, "warning", nil, args.destName) -- move out
 	end
 end
 
@@ -376,24 +377,23 @@ end
 function mod:ArcaneExpulsion(args)
 	self:StopBar(CL.count:format(CL.knockback, arcaneExpulsionCount))
 	self:Message(args.spellId, "red", CL.count:format(CL.knockback, arcaneExpulsionCount))
-	self:PlaySound(args.spellId, "warning") -- knocback inc
 	self:CastBar(args.spellId, 5, CL.count:format(CL.knockback, arcaneExpulsionCount))
 	arcaneExpulsionCount = arcaneExpulsionCount + 1
+	self:PlaySound(args.spellId, "warning") -- knocback inc
 end
 
 function mod:InvokeCollector()
 	self:StopBar(CL.count:format(L.invoke_collector, invokerCollectorCount))
 	self:Message(1231720, "cyan", CL.count:format(L.invoke_collector, invokerCollectorCount))
-	self:PlaySound(1231720, "long") -- debuffs incoming
 	invokerCollectorCount = invokerCollectorCount + 1
 	local cd = getTimers(1231720, invokerCollectorCount)
 	self:Bar(1231720, cd, CL.count:format(L.invoke_collector, invokerCollectorCount))
+	self:PlaySound(1231720, "long") -- debuffs incoming
 end
 
 function mod:AstralHarvest()
 	self:StopBar(CL.count:format(CL.adds, astralHarvestCount))
 	self:Message(1228214, "yellow", CL.count:format(CL.adds, astralHarvestCount))
-	self:PlaySound(1228214, "info")
 	astralHarvestCount = astralHarvestCount + 1
 	local cd = getTimers(1228214, astralHarvestCount)
 	self:Bar(1228214, cd, CL.count:format(CL.adds, astralHarvestCount))
@@ -434,17 +434,13 @@ function mod:DarkTerminus(args) -- Early P2 Starting
 	self:StopBar(CL.count:format(CL.knockback, arcaneExpulsionCount)) -- Arcane Expulsion
 	self:StopBar(CL.count:format(self:SpellName(1248133), voidTearCount)) -- Void Tear
 
+	self:CastBar(args.spellId, 7)
 	self:Message(args.spellId, "yellow", CL.casting:format(args.spellName))
 	self:PlaySound(args.spellId, "alert")
-	self:CastBar(args.spellId, 7)
 end
 
 -- Intermission: The Iris Opens
 function mod:ArcaneExpulsionSuccess()
-	self:SetStage(1.5)
-	self:Message("stages", "cyan", CL.intermission, false)
-	self:PlaySound("stages", "long") -- intermission
-
 	self:StopBar(CL.count:format(self:SpellName(1228502), overwhelmingPowerCount)) -- Overwhelming Power
 	self:StopBar(CL.count:format(L.invoke_collector, invokerCollectorCount)) -- Invoke Collector
 	self:StopBar(CL.count:format(CL.adds, astralHarvestCount)) -- Astral Harvest
@@ -454,6 +450,10 @@ function mod:ArcaneExpulsionSuccess()
 	self:StopBar(CL.count:format(self:SpellName(1248133), voidTearCount)) -- Void Tear
 
 	self:Bar(-32596, 12, CL.adds_spawning, 1232738) -- Shielded Attendant. Hardened Shell Icon
+
+	self:SetStage(1.5)
+	self:Message("stages", "cyan", CL.intermission, false)
+	self:PlaySound("stages", "long") -- intermission
 end
 
 do
@@ -461,20 +461,20 @@ do
 	function mod:FocusingIrisDamage(args)
 		if self:Me(args.destGUID) and args.time - prev > 2 then
 			prev = args.time
-			self:PlaySound(args.spellId, "underyou", nil, args.destName)
 			self:PersonalMessage(args.spellId, "underyou")
+			self:PlaySound(args.spellId, "underyou", nil, args.destName)
 		end
 	end
 end
 
 function mod:PhotonBlast(args)
+	self:Nameplate(args.spellId, 0, args.sourceGUID)
+	-- How can we clear the nameplates for this? needed?
 	local unit = self:UnitTokenFromGUID(args.sourceGUID)
 	if unit and self:UnitWithinRange(unit, 20) then
 		self:Message(args.spellId, "yellow", CL.dodge)
 		self:PlaySound(args.spellId, "alert") -- dodge
 	end
-	self:Nameplate(args.spellId, 0, args.sourceGUID)
-	-- How can we clear the nameplates for this? needed?
 end
 
 function mod:PhotonBlastSuccess(args)
@@ -503,16 +503,13 @@ end
 
 function mod:ManaSacrifice() -- Back to P1 / P2
 	if arcaneExpulsionCount <= 2 then -- Stage 1
-		self:Message("stages", "green", CL.stage:format(1), false)
-		self:PlaySound("stages", "long")
-		self:SetStage(1)
-
 		arcaneObliterationCount = 1
 		overwhelmingPowerCount = 1
 		silencingTempestCount = 1
 		astralHarvestCount = 1
 		invokerCollectorCount = 1
 		voidTearCount = 1
+		self:SetStage(1)
 
 		-- Move these to the actual p1 start? small improvement or no difference?
 		self:Bar(1228502, getTimers(1228502, overwhelmingPowerCount), CL.count:format(self:SpellName(1228502), overwhelmingPowerCount)) -- Overwhelming Power
@@ -524,6 +521,9 @@ function mod:ManaSacrifice() -- Back to P1 / P2
 		if self:Mythic() then
 			self:Bar(1248171, getTimers(1248171, voidTearCount), CL.count:format(self:SpellName(1248171), voidTearCount)) -- Void Tear
 		end
+
+		self:Message("stages", "green", CL.stage:format(1), false)
+		self:PlaySound("stages", "long")
 	else -- Stage 2
 		self:Message("stages", "green", CL.soon:format(CL.stage:format(2)), false)
 		self:PlaySound("stages", "long")
@@ -536,8 +536,8 @@ end
 
 function mod:ManaSplinterApplied(args)
 	self:TargetMessage(args.spellId, "red", args.destName)
-	self:PlaySound(args.spellId, "long") -- weakened
 	self:Bar(args.spellId, 12, CL.weakened)
+	self:PlaySound(args.spellId, "long") -- weakened
 end
 
 function mod:ManaSplinterRemoved(args)
@@ -556,21 +556,21 @@ end
 
 -- Stage Two: Darkness Hungers
 function mod:Stage2Start()
-	self:SetStage(2)
-	self:Message("stages", "cyan", CL.stage:format(2), false)
-	self:PlaySound("stages", "long") -- stage 2
-
 	voidHarvestCount = 1
 	silencingTempestCount = 1
 	overwhelmingPowerCount = 1
 	deathThroesCount = 1
+	self:SetStage(2)
 
 	self:Bar(1228502, 4.0, CL.count:format(self:SpellName(1228502), overwhelmingPowerCount)) -- Overwhelming Power
 	self:Bar(1243901, 8.0, CL.count:format(CL.adds, voidHarvestCount)) -- Void Harvest
-	self:Bar(1228188, self:Mythic() and 30 or 12.0, CL.count:format(CL.pools, silencingTempestCount)) -- Silencing Tempest
+	self:Bar(1228188, self:Mythic() and 36.0 or self:Easy() and 32.9 or 12.0, CL.count:format(CL.pools, silencingTempestCount)) -- Silencing Tempest
 	if self:Mythic() then
 		self:Bar(1232221, 12.0, CL.count:format(CL.knockback, deathThroesCount)) -- Death Throes
 	end
+
+	self:Message("stages", "cyan", CL.stage:format(2), false)
+	self:PlaySound("stages", "long") -- stage 2
 end
 
 do
@@ -578,8 +578,8 @@ do
 	function mod:CrushingDarknessDamage(args)
 		if self:Me(args.destGUID) and args.time - prev > 2 then
 			prev = args.time
-			self:PlaySound(args.spellId, "underyou", nil, args.destName)
 			self:PersonalMessage(args.spellId, "underyou")
+			self:PlaySound(args.spellId, "underyou", nil, args.destName)
 		end
 	end
 end
@@ -587,21 +587,21 @@ end
 function mod:VoidHarvest()
 	self:StopBar(CL.count:format(CL.adds, voidHarvestCount))
 	self:Message(1243901, "yellow", CL.count:format(CL.adds, voidHarvestCount))
-	self:PlaySound(1243901, "info") -- debuffs incoming
 	voidHarvestCount = voidHarvestCount + 1
 	local cd = voidHarvestCount % 2 == 1 and 36 or 8
 	if self:Mythic() then
 		cd = voidHarvestCount % 3 == 1 and 28 or 8
 	end
 	self:Bar(1243901, cd, CL.count:format(CL.adds, voidHarvestCount))
+	self:PlaySound(1243901, "info") -- debuffs incoming
 end
 
 function mod:VoidHarvestApplied(args)
 	if self:Me(args.destGUID) then
 		self:PersonalMessage(1243901, nil, CL.add)
-		self:PlaySound(1243901, "warning", nil, args.destName) -- move out
 		self:Say(1243901, CL.add, nil, "Add")
 		self:SayCountdown(1243901, 7)
+		self:PlaySound(1243901, "warning", nil, args.destName) -- move out
 	end
 end
 
@@ -618,15 +618,15 @@ function mod:VoidTear()
 	local spellName = self:SpellName(1248171)
 	self:StopBar(CL.count:format(spellName, voidTearCount))
 	self:Message(1248171, "orange", CL.count:format(spellName, voidTearCount))
-	self:PlaySound(1248171, "alarm") -- watch for void tear location
 	voidTearCount = voidTearCount + 1
 	local cd = getTimers(1248171, voidTearCount)
 	self:Bar(1248171, cd, CL.count:format(spellName, voidTearCount))
+	self:PlaySound(1248171, "alarm") -- watch for void tear location
 end
 
 function mod:DeathThroes(args)
 	self:Message(args.spellId, "orange", CL.knockback)
-	self:PlaySound(args.spellId, "warning") -- knockback
 	deathThroesCount = deathThroesCount + 1
 	self:Bar(1248171, 44.0, CL.count:format(CL.knockback, deathThroesCount))
+	self:PlaySound(args.spellId, "warning") -- knockback
 end

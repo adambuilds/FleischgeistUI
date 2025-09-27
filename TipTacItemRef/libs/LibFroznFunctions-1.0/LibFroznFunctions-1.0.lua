@@ -9,7 +9,7 @@
 
 -- create new library
 local LIB_NAME = "LibFroznFunctions-1.0";
-local LIB_MINOR = 49; -- bump on changes
+local LIB_MINOR = 50; -- bump on changes
 
 if (not LibStub) then
 	error(LIB_NAME .. " requires LibStub.");
@@ -1214,7 +1214,6 @@ function LibFroznFunctions:CreateLinkedTableFromTableWithKey(originalTable, keyF
 			originalTable[keyFromOriginalTable][key] = value;
 		end,
 		__call = function(tab, ...)
-		print("drin");
 			return originalTable(...);
 		end
 	};
@@ -1743,6 +1742,16 @@ end
 ----------------------------------------------------------------------------------------------------
 --                                             Addons                                             --
 ----------------------------------------------------------------------------------------------------
+
+-- is addon enabled
+--
+-- @param  indexOrName  index in the addon list (cannot query Blizzard addons by index) or name of the addon (as in TOC/folder filename, case insensitive)
+-- @return true if the addon is enabled, false otherwise.
+function LibFroznFunctions:IsAddOnEnabled(indexOrName)
+	local loaded, finished = C_AddOns.IsAddOnLoaded(indexOrName)
+	
+	return loaded;
+end
 
 -- is addon finished loading
 --
@@ -3527,7 +3536,10 @@ function LibFroznFunctions:GetUnitRecordFromCache(_unitID, _unitGUID, tryToDeter
 		LibFroznFunctions:UpdateUnitRecord(unitRecordFromCache, unitID);
 	else
 		unitRecordFromCache = LibFroznFunctions:CreateUnitRecord(unitID);
-		cacheUnitRecords[unitGUID] = unitRecordFromCache;
+		
+		if (unitRecordFromCache) then
+			cacheUnitRecords[unitGUID] = unitRecordFromCache;
+		end
 	end
 	
 	return unitRecordFromCache;
@@ -3568,6 +3580,10 @@ end
 --           .powerType                           power type of unit, e.g. 0 (Mana) or (1) Rage, see "Enum.PowerType"
 --           .power                               power of unit
 --           .powerMax                            max power of unit
+--           .npcID                               npc id of npc
+--           .map                                 map of player unit
+--           .zone                                zone of the player unit
+--           .subzone                             subzone of the player unit
 --           .isTipTacDeveloper                   true if it's a unit of a TipTac developer, false for other units.
 --         returns nil if no unit id is supplied
 local LFF_CURRENT_REGION_ID = GetCurrentRegion();
@@ -3585,10 +3601,17 @@ function LibFroznFunctions:CreateUnitRecord(unitID)
 		return;
 	end
 	
+	-- no unit guid
+	local unitGUID = UnitGUID(unitID);
+	
+	if (not unitGUID) then
+		return;
+	end
+	
 	-- create unit record
 	local unitRecord = {};
 	
-	unitRecord.guid = UnitGUID(unitID);
+	unitRecord.guid = unitGUID;
 	unitRecord.id = unitID;
 	
 	unitRecord.isPlayer = UnitIsPlayer(unitID);
@@ -3614,6 +3637,8 @@ function LibFroznFunctions:CreateUnitRecord(unitID)
 	unitRecord.classification = UnitClassification(unitID);
 	unitRecord.isTipTacDeveloper = (unitRecord.isPlayer) and (LFF_TIPTAC_DEVELOPER[LFF_CURRENT_REGION_ID]) and (LFF_TIPTAC_DEVELOPER[LFF_CURRENT_REGION_ID][unitRecord.guid]) or false;
 	
+	unitRecord.npcID = (unitRecord.isNPC) and tonumber(unitRecord.guid:match("-(%d+)-%x+$"));
+	
 	self:UpdateUnitRecord(unitRecord);
 	
 	return unitRecord;
@@ -3635,6 +3660,7 @@ function LibFroznFunctions:UpdateUnitRecord(unitRecord, newUnitID)
 	
 	-- update unit record
 	local unitPVPName = UnitPVPName(unitID); -- returns nil or "" if the unit is currently not visible to the client
+	local mapID = C_Map.GetBestMapForUnit(unitID);
 	
 	unitRecord.id = unitID;
 	unitRecord.timestamp = GetTime();
@@ -3649,6 +3675,26 @@ function LibFroznFunctions:UpdateUnitRecord(unitRecord, newUnitID)
 	unitRecord.powerType = UnitPowerType(unitID);
 	unitRecord.power = UnitPower(unitID);
 	unitRecord.powerMax = UnitPowerMax(unitID);
+	
+	unitRecord.map = nil;
+	unitRecord.zone = nil;
+	unitRecord.subzone = nil;
+	
+	-- add location (map, zone and subzone) to unit record
+	if (unitRecord.isPlayer) then
+		if (mapID) then
+			local mapInfo = C_Map.GetMapInfo(mapID);
+			
+			unitRecord.map = (mapInfo) and (mapInfo.name);
+		end
+		
+		if (unitRecord.isSelf) then
+			local subzone = GetSubZoneText();
+			
+			unitRecord.zone = GetRealZoneText();
+			unitRecord.subzone = (subzone ~= "") and (subzone);
+		end
+	end
 	
 	-- add role play name to unit record
 	if (unitRecord.isPlayer) then

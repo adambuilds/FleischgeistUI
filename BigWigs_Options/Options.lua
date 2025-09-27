@@ -41,7 +41,7 @@ end
 
 local colorModule
 local soundModule
-local configFrame, isPluginOpen
+local configFrame
 
 local showToggleOptions, getAdvancedToggleOption = nil, nil
 local toggleOptionsStatusTable, lastOptionsTab = {}, nil
@@ -66,8 +66,7 @@ local C_EncounterJournal_GetSectionInfo = loader.isClassic and function(key)
 	end
 end or C_EncounterJournal.GetSectionInfo
 
-local getOptions
-local acOptions = {
+local aceConfigTableMainBigWigsTab = {
 	type = "group",
 	name = "BigWigs",
 	get = function(info)
@@ -81,7 +80,7 @@ local acOptions = {
 		general = {
 			order = 0,
 			type = "group",
-			name = L.general,
+			name = "BigWigs",
 			args = {
 				introduction = {
 					type = "description",
@@ -248,25 +247,49 @@ local acOptions = {
 				},
 			},
 		},
-		tools = {
-			order = 1,
-			type = "group",
-			name = L.tools,
-			args = {
-				toolsDesc = {
-					type = "description",
-					name = L.toolsDesc,
-					fontSize = "large",
-					order = 0,
-					width = "full",
-				},
-			},
-			hidden = loader.isVanilla,
-		},
 	},
 }
 
+local ConstructMainBigWigsTab
 do
+	local ConstructToolsTab
+	do
+		local aceConfigTableToolsTab = {
+			type = "group",
+			name = L.tools,
+			get = function(info)
+				return loader.db.profile[info[#info]]
+			end,
+			set = function(info, value)
+				local key = info[#info]
+				loader.db.profile[key] = value
+			end,
+			args = {
+				tools = {
+					order = 1,
+					type = "group",
+					name = L.tools,
+					args = {
+						toolsDesc = {
+							type = "description",
+							name = L.toolsDesc,
+							fontSize = "large",
+							order = 0,
+							width = "full",
+						},
+					},
+					hidden = loader.isVanilla,
+				},
+			},
+		}
+		function ConstructToolsTab()
+			for key, optionsTable in next, API.GetToolOptions() do
+				aceConfigTableToolsTab.args.tools.args[key] = optionsTable
+			end
+			return aceConfigTableToolsTab
+		end
+	end
+
 	local addonName, addonTable = ...
 	local f = CreateFrame("Frame")
 	f:RegisterEvent("ADDON_LOADED")
@@ -274,7 +297,7 @@ do
 		if addon ~= addonName then return end
 		f:UnregisterEvent("ADDON_LOADED")
 
-		acOptions.args.general.args.profileOptions = {
+		aceConfigTableMainBigWigsTab.args.general.args.profileOptions = {
 			type = "group",
 			childGroups = "tab",
 			order = 100,
@@ -284,17 +307,17 @@ do
 				import = addonTable.sharingOptions.importSection,
 			},
 		}
-		acOptions.args.general.args.profileOptions.name = "|TInterface\\AddOns\\BigWigs\\Media\\Icons\\Menus\\Profile:20|t " .. acOptions.args.general.args.profileOptions.args.profile.name
-		acOptions.args.general.args.profileOptions.args.profile.order = 1
+		aceConfigTableMainBigWigsTab.args.general.args.profileOptions.name = "|TInterface\\AddOns\\BigWigs\\Media\\Icons\\Menus\\Profile:20|t " .. aceConfigTableMainBigWigsTab.args.general.args.profileOptions.args.profile.name
+		aceConfigTableMainBigWigsTab.args.general.args.profileOptions.args.profile.order = 1
 
 		if lds then
-			lds:EnhanceOptions(acOptions.args.general.args.profileOptions.args.profile, loader.db)
+			lds:EnhanceOptions(aceConfigTableMainBigWigsTab.args.general.args.profileOptions.args.profile, loader.db)
 		end
 
-		acr:RegisterOptionsTable("BigWigs", getOptions, true)
+		acr:RegisterOptionsTable("BigWigs", ConstructMainBigWigsTab, true)
+		acr:RegisterOptionsTable("BigWigsTools", ConstructToolsTab, true)
 		acd:SetDefaultSize("BigWigs", 858, 660)
-
-		acr.RegisterCallback(options, "ConfigTableChange")
+		acd:SetDefaultSize("BigWigsTools", 858, 660)
 
 		colorModule = BigWigs:GetPlugin("Colors")
 		soundModule = BigWigs:GetPlugin("Sounds")
@@ -489,7 +512,7 @@ local function advancedToggles(dbKey, module, check)
 
 	local isPrivateAura = hasOptionFlag(dbKey, module, "PRIVATE")
 
-	if bit.band(dbv, C.MESSAGE) == C.MESSAGE then
+	if dbKey ~= "altpower" and dbKey ~= "infobox" then
 		-- Emphasize
 		if not isPrivateAura or hasOptionFlag(dbKey, module, "ME_ONLY_EMPHASIZE") then
 			advOpts[#advOpts+1] = getSlaveToggle(L.EMPHASIZE, L.EMPHASIZE_desc, dbKey, module, C.EMPHASIZE, check, 0.3, module:GetMenuIcon("EMPHASIZE"))
@@ -505,7 +528,7 @@ local function advancedToggles(dbKey, module, check)
 		--
 
 		-- Cast Bars & Cast Countdowns
-		if bit.band(dbv, C.CASTBAR) == C.CASTBAR and hasOptionFlag(dbKey, module, "CASTBAR") then
+		if hasOptionFlag(dbKey, module, "CASTBAR") then
 			advOpts[#advOpts+1] = getSlaveToggle(L.CASTBAR, L.CASTBAR_desc, dbKey, module, C.CASTBAR, check, 0.3, module:GetMenuIcon("CASTBAR"))
 			advOpts[#advOpts+1] = getSlaveToggle(L.CASTBAR_COUNTDOWN, L.CASTBAR_COUNTDOWN_desc, dbKey, module, C.CASTBAR_COUNTDOWN, check, 0.5, module:GetMenuIcon("CASTBAR_COUNTDOWN"))
 		end
@@ -523,7 +546,7 @@ local function advancedToggles(dbKey, module, check)
 		--
 	end
 
-	if bit.band(dbv, C.NAMEPLATE) == C.NAMEPLATE and hasOptionFlag(dbKey, module, "NAMEPLATE") then
+	if hasOptionFlag(dbKey, module, "NAMEPLATE") then
 		advOpts[#advOpts+1] = getSlaveToggle(L.NAMEPLATE, L.NAMEPLATE_desc, dbKey, module, C.NAMEPLATE, check, 0.3, module:GetMenuIcon("NAMEPLATE"))
 	end
 
@@ -534,7 +557,7 @@ local function advancedToggles(dbKey, module, check)
 	end
 	--
 
-	if bit.band(dbv, C.MESSAGE) == C.MESSAGE then
+	if dbKey ~= "altpower" and dbKey ~= "infobox" then
 		if API:HasVoicePack() then
 			advOpts[#advOpts+1] = getSlaveToggle(L.VOICE, L.VOICE_desc, dbKey, module, C.VOICE, check, 0.3, module:GetMenuIcon("VOICE"))
 		end
@@ -1658,6 +1681,7 @@ do
 		end
 	end
 
+	local currentlyOpenContainer
 	local function onTabGroupSelected(widget, event, value)
 		visibleSpellDescriptionWidgets = {}
 		widget:ReleaseChildren()
@@ -1672,12 +1696,26 @@ do
 			container:SetFullWidth(true)
 
 			-- Have to use :Open instead of just :FeedGroup because some widget types (range, color) call :Open to refresh on change
-			isPluginOpen = container
+			currentlyOpenContainer = container
 			acd:Open("BigWigs", container)
 
 			widget:AddChild(container)
+		elseif value == "tools" then
+			configFrame:SetTitle("BigWigs")
+			configFrame:SetStatusText(" "..loader:GetReleaseString())
+			-- Embed the AceConfig options in our AceGUI frame
+			local container = AceGUI:Create("SimpleGroup")
+			container.type = "BigWigsOptions" -- We want ACD to create a ScrollFrame, so we change the type to bypass it's group control check
+			container:SetFullHeight(true)
+			container:SetFullWidth(true)
+
+			-- Have to use :Open instead of just :FeedGroup because some widget types (range, color) call :Open to refresh on change
+			currentlyOpenContainer = container
+			acd:Open("BigWigsTools", container)
+
+			widget:AddChild(container)
 		else
-			isPluginOpen = nil
+			currentlyOpenContainer = nil
 			local treeTbl = {}
 			local addonNameToHeader = {}
 			local defaultHeader
@@ -1813,6 +1851,13 @@ do
 		end
 	end
 
+	function options:ConfigTableChange(_, appName)
+		if (appName == "BigWigs" or appName == "BigWigsTools") and currentlyOpenContainer then
+			acd:Open(appName, currentlyOpenContainer)
+		end
+	end
+	acr.RegisterCallback(options, "ConfigTableChange")
+
 	function options:OpenConfig()
 		spellDescriptionUpdater:RegisterEvent("SPELL_TEXT_UPDATE")
 
@@ -1826,12 +1871,12 @@ do
 		bw:SetLayout("Flow")
 		bw:SetCallback("OnClose", function(widget)
 			visibleSpellDescriptionWidgets = {}
+			statusTable = {}
+			currentlyOpenContainer = nil
+			configFrame = nil
 			spellDescriptionUpdater:UnregisterEvent("SPELL_TEXT_UPDATE")
 			widget:ReleaseChildren()
 			AceGUI:Release(widget)
-			statusTable = {}
-			isPluginOpen = nil
-			configFrame = nil
 			options:SendMessage("BigWigs_CloseGUI")
 		end)
 
@@ -1841,6 +1886,7 @@ do
 		tabs:SetFullHeight(true)
 		tabs:SetTabs({
 			{ text = L.options, value = "options" },
+			{ text = L.tools, value = "tools" },
 			{ text = L.raidBosses, value = "bigwigs" },
 			{ text = L.dungeonBosses, value = "littlewigs" },
 		})
@@ -1859,7 +1905,7 @@ do
 		if not registered[pluginName] then
 			if type(pluginOptions) == "table" then
 				registered[pluginName] = true
-				acOptions.args.general.args[pluginName] = pluginOptions
+				aceConfigTableMainBigWigsTab.args.general.args[pluginName] = pluginOptions
 			elseif type(subPanelOptions) == "table" then
 				registered[pluginName] = true
 				local key = subPanelOptions.key
@@ -1867,26 +1913,23 @@ do
 				if type(opts) == "function" then
 					subPanelRegistry[key] = opts
 				else
-					acOptions.args[key] = opts
+					aceConfigTableMainBigWigsTab.args[key] = opts
 				end
 			end
 		end
 	end
 
-	function getOptions()
-		for key, opts in next, subPanelRegistry do
-			acOptions.args[key] = opts()
+	function ConstructMainBigWigsTab()
+		for key, optionsTableFunction in next, subPanelRegistry do
+			local optionsTable = securecallfunction(optionsTableFunction)
+			if type(optionsTable) == "table" and xpcall(acr.ValidateOptionsTable, geterrorhandler(), acr, optionsTable, optionsTable.name) then
+				aceConfigTableMainBigWigsTab.args[key] = optionsTable
+			end
 		end
-		for key, optionsTable in next, API.GetToolOptionTables() do
-			acOptions.args.tools.args[key] = optionsTable
+		for key, optionsTable in next, API.GetPluginOptions() do
+			aceConfigTableMainBigWigsTab.args[key] = optionsTable
 		end
-		return acOptions
-	end
-end
-
-function options:ConfigTableChange(_, appName)
-	if appName == "BigWigs" and isPluginOpen then
-		acd:Open("BigWigs", isPluginOpen)
+		return aceConfigTableMainBigWigsTab
 	end
 end
 
@@ -1936,7 +1979,7 @@ do
 	local _, addonTable = ...
 	-- DO NOT USE THIS DIRECTLY. This code may not be loaded
 	-- Use BigWigsAPI.RegisterProfile(addonName, profileString, optionalCustomProfileName, optionalCallbackFunction)
-	function options:SaveImportStringDataFromAddOn(addonName, profileString, optionalCustomProfileName, optionalCallbackFunction)
+	function options.SaveImportStringDataFromAddOn(addonName, profileString, optionalCustomProfileName, optionalCallbackFunction)
 		if type(addonName) ~= "string" or #addonName < 3 then error("Invalid addon name for profile import.") end
 		if type(profileString) ~= "string" or #profileString < 3 then error("Invalid profile string for profile import.") end
 		if optionalCustomProfileName and (type(optionalCustomProfileName) ~= "string" or #optionalCustomProfileName < 3) then error("Invalid custom profile name for the string you want to import.") end
@@ -1989,6 +2032,12 @@ do
 				optionalCallbackFunction(false)
 			end
 		end)
+	end
+	-- DO NOT USE THIS DIRECTLY. This code may not be loaded
+	-- Use BigWigsAPI.RequestProfile(addonName)
+	function options.RequestProfile(addonName)
+		if type(addonName) ~= "string" or #addonName < 3 then error("Invalid addon name for profile request.") end
+		return addonTable.GetExportString(true)
 	end
 end
 

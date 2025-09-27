@@ -741,10 +741,6 @@ L["STRING_OPTIONS_MPLUS_BOSSNEWCOMBAT_DESC"] = "If a boss is pulled while in com
 --[[Translation missing --]]
 L["STRING_OPTIONS_MPLUS_DPS_ANCHOR"] = "Overall Segment DPS Calculation"
 --[[Translation missing --]]
-L["STRING_OPTIONS_MPLUS_MAKEOVERALL"] = "Make Overall Segment"
---[[Translation missing --]]
-L["STRING_OPTIONS_MPLUS_MAKEOVERALL_DESC"] = "After the run is completed, this option creates a new segment containing all combat data from the run."
---[[Translation missing --]]
 L["STRING_OPTIONS_MPLUS_MERGETRASH"] = "Merge Trash"
 --[[Translation missing --]]
 L["STRING_OPTIONS_MPLUS_PANELS_ANCHOR"] = "Panels"
@@ -1253,6 +1249,8 @@ L["STRING_QUERY_INSPECT_REFRESH"] = "richiede aggiornamento"
 L["STRING_RAID_WIDE"] = "[*] raid wide cooldown"
 L["STRING_RAIDCHECK_PLUGIN_DESC"] = "Mentre sei all'interno di un'istanza d'incursione, mostra l'icona su Details! barra del titolo che mostra fiaschetta, cibo, uso della pre-pozione."
 L["STRING_RAIDCHECK_PLUGIN_NAME"] = "Controllo Incursione"
+--[[Translation missing --]]
+L["STRING_RECENT_PLAYERS"] = "Recent Players:"
 L["STRING_REPORT"] = "per"
 L["STRING_REPORT_BUTTON_TOOLTIP"] = "Fare clic per aprire la finestra di dialogo del Rapporto"
 L["STRING_REPORT_FIGHT"] = "combattimento"
