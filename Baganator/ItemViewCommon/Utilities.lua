@@ -12,6 +12,7 @@ function addonTable.Utilities.GetAllCharacters(searchText)
         name = info.details.character,
         realmNormalized = info.details.realmNormalized,
         realm = info.details.realm,
+        faction = info.details.faction,
         className = info.details.className,
         race = info.details.race,
         sex = info.details.sex,
@@ -46,7 +47,7 @@ function addonTable.Utilities.GetAllGuilds(searchText)
         fullName = guild,
         name = info.details.guild,
         realmNormalized = info.details.realm,
-        realm = realmNormalizedToRealmMap[info.details.realm or info.details.realms[1]] or info.details.realm or info.details.realms[1],
+        realm = realmNormalizedToRealmMap[info.details.realm] or info.details.realm or "MISSING",
       })
     end
   end

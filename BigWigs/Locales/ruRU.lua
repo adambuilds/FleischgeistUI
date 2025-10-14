@@ -78,6 +78,7 @@ L.expansionNames = {
 	"Темные Земли", -- Shadowlands
 	"Dragonflight", -- Dragonflight -- Can't figure a out a good way to translate this
 	"The War Within", -- The War Within
+	"Midnight", -- Midnight
 }
 L.littleWigsExtras = {
 	["LittleWigs_Delves"] = "Вылазки",
@@ -294,6 +295,10 @@ L.LFR = "LFR"
 L.normal = "Обычный"
 L.heroic = "Героический"
 L.mythic = "Эпохальный"
+L.LFR_timerun = "|A:timerunning-glues-icon:14:14|aLFR"
+L.normal_timerun = "|A:timerunning-glues-icon:14:14|aОбычный"
+L.heroic_timerun = "|A:timerunning-glues-icon:14:14|aГероический"
+L.mythic_timerun = "|A:timerunning-glues-icon:14:14|aЭпохальный"
 L.timewalk = "Путешествие во времени"
 L.solotier8 = "Соло Уровень 8"
 L.solotier11 = "Соло Уровень 11"

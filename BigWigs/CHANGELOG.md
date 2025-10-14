@@ -1,8 +1,16 @@
 # BigWigs
 
-## [v399.8](https://github.com/BigWigsMods/BigWigs/tree/v399.8) (2025-09-25)
-[Full Changelog](https://github.com/BigWigsMods/BigWigs/compare/v399.7...v399.8) [Previous Releases](https://github.com/BigWigsMods/BigWigs/releases)
+## [v400.1](https://github.com/BigWigsMods/BigWigs/tree/v400.1) (2025-10-09)
+[Full Changelog](https://github.com/BigWigsMods/BigWigs/compare/v400...v400.1) [Previous Releases](https://github.com/BigWigsMods/BigWigs/releases)
 
-- Bump version  
-- ManaforgeOmega/Hunters: Don't overlap sounds for The Hunt  
-- ManaforgeOmega/Araz: Remove sound when Astral Harvest starts casting, fixes an overlap with the sound when it's on you  
+- Tools/Keystones: Change how we deal with missing shortened names  
+- Options: Display Timerunning stats correctly  
+- Update koKR (#2279)  
+- Tools/Keystones: Cleanups  
+- Loader: Fix current season error on beta  
+- Support storing Timerunning stats separately  
+- Options: Fix error when trying to display unknown stats, stop hiding tools on vanilla  
+- Plugins/AutoReply: Tweak  
+- Core/BossPrototype: Allow `GetPlayerAura` to take an optional unit  
+- Loader: Tweak  
+- Midnight/Bars: Support Paused Bars  

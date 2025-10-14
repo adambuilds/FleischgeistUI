@@ -9,7 +9,7 @@
 
 -- create new library
 local LIB_NAME = "LibFroznFunctions-1.0";
-local LIB_MINOR = 50; -- bump on changes
+local LIB_MINOR = 51; -- bump on changes
 
 if (not LibStub) then
 	error(LIB_NAME .. " requires LibStub.");
@@ -389,6 +389,36 @@ function LibFroznFunctions:GetItemFromTooltip(tooltip)
 	
 	-- before df 10.0.2
 	return tooltip:GetItem();
+end
+
+-- get item level by unit and inventory slot
+--
+-- @param  unitID           unit id, e.g. "player", "target" or "mouseover"
+-- @param  inventorySlotID  inventory slot id
+-- @return itemLevel, nil otherwise.
+local LFF_ITEM_TOOLTIP_ITEM_LEVEL_MAXLINE = 4;
+local LFF_ITEM_TOOLTIP_ITEM_LEVEL_PATTERN = ITEM_LEVEL:gsub("%%d", "(%%d+)");
+
+function LibFroznFunctions:GetItemLevelByUnitAndInventorySlot(unitID, inventorySlotID)
+	-- get item tooltip data because item level upgrades aren't considered in item links returned by GetInventoryItemLink()
+	local itemTooltipData = LibFroznFunctions:GetTooltipInfo("GetInventoryItem", unitID, inventorySlotID);
+	
+	if (not itemTooltipData) or (type(itemTooltipData.lines) ~= "table") then
+		return nil;
+	end
+	
+	-- get item level from item tooltip data
+	for i = 2, min(#itemTooltipData.lines, LFF_ITEM_TOOLTIP_ITEM_LEVEL_MAXLINE) do
+		local lineLeftText = itemTooltipData.lines[i].leftText;
+		
+		if (type(lineLeftText) == "string") then
+			local itemLevel = tonumber(lineLeftText:match(LFF_ITEM_TOOLTIP_ITEM_LEVEL_PATTERN));
+			
+			if (itemLevel) then
+				return itemLevel;
+			end
+		end
+	end
 end
 
 -- hook tooltip's OnTooltipSetItem
@@ -2961,7 +2991,8 @@ function LibFroznFunctions:GetTooltipInfo(functionName, ...)
 	-- get tooltip info from scanning tooltip
 	local accessors = { -- see "TooltipDataHandler.lua"
 		GetUnit = "SetUnit",
-		GetUnitAura = "SetUnitAura"
+		GetUnitAura = "SetUnitAura",
+		GetInventoryItem = "SetInventoryItem"
 	};
 	
 	local tooltipData = LibFroznFunctions:GetTooltipDataFromScanTip("GetTooltipInfo", accessors[functionName], ...);
@@ -3344,7 +3375,7 @@ end
 
 -- get unit id from unit guid
 --
--- @param  unit guid  unit guid
+-- @param  unitGUID  unit guid
 -- @return unit id, unit name. nil, unit name otherwise.
 function LibFroznFunctions:GetUnitIDFromGUID(unitGUID)
 	-- no unit guid
@@ -3505,6 +3536,22 @@ function LibFroznFunctions:GetUnitReactionIndex(unitID)
 	return LFF_UNIT_REACTION_INDEX.exaltedNPC;
 end
 
+-- get npc id from unit guid
+--
+-- @param  unitGUID  unit guid
+-- @return npc id of npc, nil otherwise.
+function LibFroznFunctions:GetNpcIDFromGUID(unitGUID)
+	-- no unit guid
+	if (not unitGUID) then
+		return;
+	end
+	
+	-- get npc id from unit guid
+	local npcID = tonumber(unitGUID:match("-(%d+)-%x+$"));
+	
+	return npcID;
+end
+
 -- get unit record from cache
 --
 -- @param  unitID                            unit id, e.g. "player", "target" or "mouseover"
@@ -3637,7 +3684,7 @@ function LibFroznFunctions:CreateUnitRecord(unitID)
 	unitRecord.classification = UnitClassification(unitID);
 	unitRecord.isTipTacDeveloper = (unitRecord.isPlayer) and (LFF_TIPTAC_DEVELOPER[LFF_CURRENT_REGION_ID]) and (LFF_TIPTAC_DEVELOPER[LFF_CURRENT_REGION_ID][unitRecord.guid]) or false;
 	
-	unitRecord.npcID = (unitRecord.isNPC) and tonumber(unitRecord.guid:match("-(%d+)-%x+$"));
+	unitRecord.npcID = (unitRecord.isNPC) and self:GetNpcIDFromGUID(unitRecord.guid) or nil;
 	
 	self:UpdateUnitRecord(unitRecord);
 	
@@ -3936,7 +3983,7 @@ end
 
 -- get player guild club member info
 --
--- @param  unit guid  unit guid
+-- @param  unitGUID  unit guid
 -- @return playerGuildClubMemberInfo, nil otherwise.
 local frameForGroupRosterUpdate, playerGuildClubIDCache;
 local playerGuildClubMemberInfosCache = {};
@@ -4656,7 +4703,7 @@ function LFF_GetAverageItemLevelFromItemData(unitID, callbackForItemData, unitGU
 			local item = Item:CreateFromItemLink(itemLink);
 			
 			if (not item:IsItemEmpty()) then
-				local effectiveILvl = item:GetCurrentItemLevel();
+				local effectiveILvl = LibFroznFunctions:GetItemLevelByUnitAndInventorySlot(unitID, i) or item:GetCurrentItemLevel(); -- preferably get effective item level from tooltip data because item level upgrades aren't considered in item links returned by GetInventoryItemLink()
 				local quality = item:GetItemQuality();
 				local inventoryType = item:GetInventoryType();
 				

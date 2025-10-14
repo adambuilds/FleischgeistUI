@@ -78,6 +78,7 @@ L.expansionNames = {
 	"Shadowlands", -- Shadowlands
 	"Dragonflight", -- Dragonflight
 	"The War Within", -- The War Within
+	"Midnight", -- Midnight
 }
 L.littleWigsExtras = {
 	["LittleWigs_Delves"] = "Gouffres",
@@ -294,6 +295,10 @@ L.LFR = "RdR"
 L.normal = "Normal"
 L.heroic = "Héroïque"
 L.mythic = "Mythique"
+L.LFR_timerun = "|A:timerunning-glues-icon:14:14|aRdR"
+L.normal_timerun = "|A:timerunning-glues-icon:14:14|aNormal"
+L.heroic_timerun = "|A:timerunning-glues-icon:14:14|aHéroïque"
+L.mythic_timerun = "|A:timerunning-glues-icon:14:14|aMythique"
 L.timewalk = "Marcheur du temps"
 L.solotier8 = "Solo Tier 8"
 L.solotier11 = "Solo Tier 11"

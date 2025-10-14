@@ -1469,7 +1469,7 @@ TwitchEmotes_defaultpack = {
     ["suze4study"] = "Interface\\AddOns\\TwitchEmotes\\Emotes\\Suze\\suze4study.tga:28:28",
     ["TheBoys"] = "Interface\\AddOns\\TwitchEmotes\\Emotes\\Suze\\TheBoys.tga:28:28",
     ["coffeeS"] = "Interface\\AddOns\\TwitchEmotes\\Emotes\\Suze\\CoffeeS.tga:28:32",
-    ["peepoIsrael"] = "Interface\\AddOns\\TwitchEmotes\\Emotes\\Suze\\PepeTamir.tga:28:32",
+	["beenocs"] = "Interface\\AddOns\\TwitchEmotes\\Emotes\\Suze\\beenocs.tga:28:28",
     -- LegendaryLea
     ["lea8"] = "Interface\\AddOns\\TwitchEmotes\\Emotes\\LegendaryLea\\lea8.tga:28:28",
     ["leaA"] = "Interface\\AddOns\\TwitchEmotes\\Emotes\\LegendaryLea\\leaA.tga:28:28",
@@ -2386,6 +2386,7 @@ TwitchEmotes_defaultpack = {
     ["peepoSadPhone"] = "Interface\\AddOns\\TwitchEmotes\\Pepes\\Pepes\\peepoSadPhone.tga:28:28",
     ["dejj"] = "Interface\\AddOns\\TwitchEmotes\\Emotes\\Pepes\\dejj.tga:28:28",
     ["PepeBald"] = "Interface\\AddOns\\TwitchEmotes\\Emotes\\Pepes\\PepeBald.tga:28:28",
+	["peepofeet"] = "Interface\\AddOns\\TwitchEmotes\\Emotes\\Pepes\\peepofeet.tga:28:28",
     -- PsheroTV
     ["heroBT"] = "Interface\\AddOns\\TwitchEmotes\\Emotes\\PsheroTV\\heroBT.tga:28:28",
     ["heroFEELS"] = "Interface\\AddOns\\TwitchEmotes\\Emotes\\PsheroTV\\heroFEELS.tga:28:28",
@@ -3728,6 +3729,7 @@ TwitchEmotes_animation_metadata = {
     ["Interface\\AddOns\\TwitchEmotes\\Emotes\\Custom\\alert.tga"] = {["nFrames"] = 17, ["frameWidth"] = 32, ["frameHeight"] = 32, ["imageWidth"]=32, ["imageHeight"]=1024, ["framerate"] = 40},
     ["Interface\\AddOns\\TwitchEmotes\\Emotes\\Custom\\LETSGOOO.tga"] = {["nFrames"] = 11, ["frameWidth"] = 32, ["frameHeight"] = 32, ["imageWidth"]=32, ["imageHeight"]=512, ["framerate"] = 20},
     ["Interface\\AddOns\\TwitchEmotes\\Emotes\\Custom\\pedro.tga"] = {["nFrames"] = 48, ["frameWidth"] = 32, ["frameHeight"] = 32, ["imageWidth"]=32, ["imageHeight"]=2048, ["framerate"] = 10},
+	["Interface\\AddOns\\TwitchEmotes\\Emotes\\Pepes\\peepofeet.tga"] = {["nFrames"] = 3, ["frameWidth"] = 32, ["frameHeight"] = 32, ["imageWidth"]=32, ["imageHeight"]=128, ["framerate"] = 15},
 }
 
 TwitchEmotes_emoticons = {
@@ -4553,6 +4555,7 @@ TwitchEmotes_emoticons = {
     ["Catablepon"] = "Catablepon",
     ["HUH"] = "HUH",
     ["jewdai"] = "jewdai",
+    ["Kayño"] = "jewdai",
     ["YodaSip"] = "YodaSip",
     ["unholysip"] = "YodaSip",
     ["billyReady"] = "billyReady",
@@ -6272,6 +6275,7 @@ TwitchEmotes_emoticons = {
     ["peepoSadPhone"] = "peepoSadPhone",
     ["dejj"] = "dejj",
     ["PepeBald"] = "PepeBald",
+	["peepofeet"] = "peepofeet",
     -- PsheroTV
     ["heroBT"] = "heroBT",
     ["heroFEELS"] = "heroFEELS",
@@ -6389,9 +6393,8 @@ TwitchEmotes_emoticons = {
     ["suze4study"] = "suze4study",
     ["TheBoys"] = "TheBoys",
     ["coffeeS"] = "coffeeS",
-    ["CoffeeS"] = "coffeeS",    
-    ["peepoIsrael"] = "peepoIsrael",
-    ["PepeTamir"] = "peepoIsrael",
+    ["CoffeeS"] = "coffeeS",
+	["beenocs"] = "beenocs",
     -- Quin69
     ["quinBeam1"] = "quinBeam1",
     ["beamB"] = "beamB",

@@ -1,8 +1,7 @@
 # BigWigs [Classic]
 
-## [v11.2.0](https://github.com/BigWigsMods/BigWigs_Classic/tree/v11.2.0) (2025-08-10)
-[Full Changelog](https://github.com/BigWigsMods/BigWigs_Classic/compare/v11.1.52...v11.2.0) [Previous Releases](https://github.com/BigWigsMods/BigWigs_Classic/releases)
+## [v11.2.1](https://github.com/BigWigsMods/BigWigs_Classic/tree/v11.2.1) (2025-10-06)
+[Full Changelog](https://github.com/BigWigsMods/BigWigs_Classic/compare/v11.2.0...v11.2.1) [Previous Releases](https://github.com/BigWigsMods/BigWigs_Classic/releases)
 
-- BlackwingLair/Trash: Throttle vulnerability messages  
-- AQ40/Trash: Tweak  
-- AQ40/Trash: Throttle Defender buff messages  
+- Bump toc  
+- Naxxramas\_Classic/Loatheb: Sort player list by name  

@@ -1,6 +1,7 @@
 # Baganator
 
-## [756](https://github.com/TheMouseNest/Baganator/tree/756) (2025-09-26)
-[Full Changelog](https://github.com/TheMouseNest/Baganator/compare/755...756) 
+## [763](https://github.com/TheMouseNest/Baganator/tree/763) (2025-10-07)
+[Full Changelog](https://github.com/TheMouseNest/Baganator/compare/762...763) 
 
-- Classic: Disable Can I Mog It integration (as its now broken on classic)  
+- Retail: Update toc for 11.2.5  
+- Midnight: Update for moved ChatEdit\_InsertLink function  

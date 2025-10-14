@@ -78,6 +78,7 @@ L.expansionNames = {
 	"暗影国度", -- Shadowlands
 	"巨龙时代", -- Dragonflight
 	"地心之战", -- The War Within
+	"至暗之夜", -- Midnight
 }
 L.littleWigsExtras = {
 	["LittleWigs_Delves"] = "地下堡",
@@ -294,6 +295,10 @@ L.LFR = "随机团队"
 L.normal = "普通"
 L.heroic = "英雄"
 L.mythic = "史诗"
+L.LFR_timerun = "|A:timerunning-glues-icon:14:14|a随机团队"
+L.normal_timerun = "|A:timerunning-glues-icon:14:14|a普通"
+L.heroic_timerun = "|A:timerunning-glues-icon:14:14|a英雄"
+L.mythic_timerun = "|A:timerunning-glues-icon:14:14|a史诗"
 L.timewalk = "时空漫游"
 L.solotier8 = "单人难度 8"
 L.solotier11 = "单人难度 11"
