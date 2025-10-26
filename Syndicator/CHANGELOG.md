@@ -1,7 +1,6 @@
 # Syndicator
 
-## [242](https://github.com/TheMouseNest/Syndicator/tree/242) (2025-10-07)
-[Full Changelog](https://github.com/TheMouseNest/Syndicator/compare/241...242) 
+## [245](https://github.com/TheMouseNest/Syndicator/tree/245) (2025-10-21)
+[Full Changelog](https://github.com/TheMouseNest/Syndicator/compare/244...245) 
 
-- Retail: Update toc for 11.2.5  
-- Midnight: Add Housing category and subcategories to search terms  
+- Vanilla: Update toc for 1.15.8  

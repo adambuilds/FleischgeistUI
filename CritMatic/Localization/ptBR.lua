@@ -1,1 +1,0 @@
--- (Brazilian Portuguese) localization file for ptBR clients.

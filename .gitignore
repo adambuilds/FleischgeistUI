@@ -24,6 +24,8 @@
 
 # Optionally ignore ZIPs you make for release
 *.zip
+*.rar
+*.7z
 
 # Ignore .DS_Store and Thumbs.db (macOS and Windows)
 .DS_Store

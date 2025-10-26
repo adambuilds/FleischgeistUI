@@ -1,1 +1,0 @@
--- (Russian) localization file for ruRU clients.

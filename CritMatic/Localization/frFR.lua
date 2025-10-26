@@ -1,1 +1,0 @@
--- (French) localization file for frFR clients.

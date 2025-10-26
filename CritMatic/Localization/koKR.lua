@@ -1,1 +1,0 @@
--- (Korean) localization file for koKR clients.

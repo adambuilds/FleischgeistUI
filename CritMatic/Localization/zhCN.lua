@@ -1,1 +1,0 @@
--- (Simple Chinese) localization file for zhCN clients.

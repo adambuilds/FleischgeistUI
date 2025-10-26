@@ -1,1 +1,0 @@
--- (Traditional Chinese) localization file for zhTW clients.

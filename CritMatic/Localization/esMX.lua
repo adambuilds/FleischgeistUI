@@ -1,1 +1,0 @@
--- (Latin American Spanish) localization file for esMX clients.
